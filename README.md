@@ -1,5 +1,5 @@
-# 상명풍력 시간별 발전량 예측: EMFN 기반 일중 급전 스펙트럼 벤치마크
-### Exogenous Multiscale Fusion Network (EMFN) for Intra-Day Wind Power Dispatch Forecasting
+# EMFN 모델을 통한 시간별 풍력 발전량 예측
+### Exogenous Multiscale Fusion Network (EMFN) for Wind Power Dispatch Forecasting
 
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B%20CUDA-ee4c2c.svg)](https://pytorch.org/)
@@ -18,7 +18,7 @@
 
 풍력 발전량 시계열은 **(1) $[0, 21.0\text{ MWh}]$의 엄격한 상하한 물리적 유계**, **(2) 약 17.5%에 달하는 시동 풍속 미달 구조적 영발전(Zero-Inflation)**, **(3) 초단기 기상 결합 시 발생하는 음의 전이(Negative Transfer)**라는 3대 도전 과제를 안고 있습니다. 
 
-제안 모델 **EMFN (Exogenous Multiscale Fusion Network)**은 이러한 물리적 한계를 수학적으로 해결하기 위해 **작업 분리형 이중 경로(Task-Decoupled Dual-Route)**와 **Bernoulli-Beta Hurdle Head**를 통합 설계하였습니다.
+제안 모델 **EMFN (Exogenous Multiscale Fusion Network)**은 이러한 물리적 한계를 수학적으로 해결하기 위해 **작업 분리형 이중 경로(Task-Decoupled Dual-Route)**와 통계학의 2단계 허들 모델(Hurdle Model) 및 베타 회귀(Beta Regression) 원리를 딥러닝 종단 출력층으로 통합한 **Bernoulli-Beta Hurdle Head**를 설계하였습니다.
 
 ```mermaid
 flowchart TD
@@ -76,8 +76,10 @@ flowchart TD
 3. **선택적 기상 게이팅 (Selective Weather Gating)**:
    - 터빈의 물리적 시동 풍속(Cut-in, 약 3.0 m/s) 인접도, 최대 풍속, 국지 기압, 영발전 지속 스트릭(Streak) 정보를 영발전 분류 분기(Route B)에만 선택적으로 주입하여 영발전 분류 정확도(Zero AUPRC)를 극대화합니다.
 4. **Bernoulli-Beta Hurdle Output Head (물리적 유계 자체 보장)**:
+   - 계량경제학의 2단계 허들 모델(Hurdle Model; Cragg, 1971)과 $[0, 1]$ 유계 구간을 다루는 베타 회귀(Beta Regression; Ferrari & Cribari-Neto, 2004) 이론을 신경망의 미분 가능한 종단 헤드로 재정의한 모듈입니다.
    - 일반 실수($\mathbb{R}$) 공간을 출력하는 기존 신경망과 달리, 유계 확률 분포(Bernoulli-Beta)를 통해 점 예측값을 디코딩하므로 **인위적인 사후 클리핑(Post-clipping) 없이도 $0.00\%$의 물리적 유계 위반율(음수 발전량 0건)을 수학적으로 완벽히 보장**합니다:
      $$\hat{y}_t = C_{max} \cdot \big(1 - \sigma(z_{zero})\big) \cdot \frac{\alpha}{\alpha + \beta} \in [0, C_{max}]$$
+   - (이를 통해 사후 클리핑으로 인한 통계적 왜곡 없이, 점 예측과 함께 영발전 사전 경보 $p_{zero}$ 및 90% 사후 신뢰구간을 단일 추론으로 제공합니다.)
 5. **복합 허들 손실 함수 (Composite Hurdle Loss)**:
    - 확률 분포의 파라미터 신뢰도를 최대화하는 음의 로그 우도(Hurdle NLL)와 전력 시장 정산의 핵심인 점 예측 정밀도를 향상시키는 가중 Huber 오차를 동시 최적화합니다:
      $$\mathcal{L}_{Total} = \mathcal{L}_{Hurdle\_NLL} + \lambda_{point} \cdot \mathcal{L}_{Huber}(\hat{y}, y)$$
