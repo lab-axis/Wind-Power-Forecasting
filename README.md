@@ -4,8 +4,6 @@
 [![Python 3.11+](https://img.shields.io/badge/Python-3.11%2B-blue.svg)](https://www.python.org/)
 [![PyTorch 2.0+](https://img.shields.io/badge/PyTorch-2.0%2B%20CUDA-ee4c2c.svg)](https://pytorch.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Target: Sangmyeong Wind 21.0MW](https://img.shields.io/badge/Target-Sangmyeong%2021.0%20MW-brightgreen.svg)]()
-[![AWS: Saebyeol 883](https://img.shields.io/badge/AWS-Saebyeol%20883-informational.svg)]()
 
 > **제안 모델 (Proposed Model)**: **EMFN (Exogenous Multiscale Fusion Network)**  
 > **출력 아키텍처 (Output Head)**: **Bernoulli-Beta Hurdle Head** (물리적 유계 $[0, 21.0\text{ MWh}]$ 및 위반율 0.00% 수학적 자체 보장)  
