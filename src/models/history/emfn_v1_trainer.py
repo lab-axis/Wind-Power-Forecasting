@@ -15,7 +15,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 
-from src.models.emfn import EMFN
+from src.models.history.emfn_v1 import EMFN
 from src.models.hurdle_beta import (
     BernoulliBetaHurdleLoss,
     decode_mixture_mean,

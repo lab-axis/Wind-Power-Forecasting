@@ -39,8 +39,8 @@ def evaluate_wind_forecast(
           - mbe, tic
           - count
     """
-    y_true = np.asarray(y_true, dtype=float)
-    y_pred = np.asarray(y_pred, dtype=float)
+    y_true = np.asarray(y_true, dtype=float).ravel()
+    y_pred = np.asarray(y_pred, dtype=float).ravel()
 
     # 음수 예측값은 물리적으로 0으로 클리핑 (풍력 발전량은 음수 불가)
     y_pred = np.clip(y_pred, 0.0, rated_capacity_mwh)

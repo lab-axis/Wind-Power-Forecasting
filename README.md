@@ -139,7 +139,7 @@ flowchart TD
 
 ---
 
-## 3. 핵심 결과 시각화 (Validation, Testing & Rollout Forecast Plots)
+## 3. 핵심 결과 시각화 (Validation, Testing & Multi-Horizon Forecast Plots)
 
 ### (1) 일중 급전 스펙트럼 지평별 성능 감쇄 곡선 (Decay Curve)
 지평이 늘어남에 따라 모든 모델의 오차가 증가하지만, EMFN은 전 구간에서 가장 완만한 RMSE 감쇄율을 보이며 +6h에서 전체 1위, 딥러닝 베이스라인을 전원 압도합니다.
@@ -166,21 +166,14 @@ flowchart TD
 
 ---
 
-### (4) 학습 말기에서 미래로 이어지는 역사적-미래 연속 롤아웃 플롯 (Historical Rollout Transition)
-학습 데이터의 마지막 48시간(2024-12-30 ~ 2024-12-31 23:00) 실측치와 2025년 1월 1일 시작 시점부터의 다중 지평(+1h, +3h, +6h, +12h, +24h) 예측 궤적이 단절 없이 매끄럽게 연결되는 전이성을 입증합니다.
-
-![EMFN Historical Transition Forecast Plot](reports/figures/emfn_historical_transition_forecast_plot.png)
-
----
-
-### (5) +12h 및 +24h 장기 지평 샘플 예측 곡선 대조
+### (4) +12h 및 +24h 장기 지평 샘플 예측 곡선 대조
 기존 신경망(DLinear, TCN)이 분산을 0으로 죽이고 중앙값 수평선(Flatline)으로 엎드리는 현상(Variance Collapse)과 대조적으로, EMFN은 장기 지평에서도 급격한 램프(Ramp) 변동 궤적을 다이내믹하게 추종합니다.
 
 ![EMFN Long Horizon Sample Forecast](reports/figures/emfn_forecast_horizon_12h_24h_sample.png)
 
 ---
 
-### (6) 4대 축 종합 어블레이션(Ablation) 매트릭스 비교
+### (5) 4대 축 종합 어블레이션(Ablation) 매트릭스 비교
 1. **기상 결합(Weather Fusion)**: 초단기 음의 전이 완전 극복  
 2. **고주파 스킵(HF Skips)**: 단기 관성 추종 오차 급감 (MAE 0.8524 $\rightarrow$ 0.8078)  
 3. **선택적 게이팅(Selective Gate)**: Zero AUPRC 0.7180 $\rightarrow$ 0.7524 상승  
@@ -190,7 +183,7 @@ flowchart TD
 
 ---
 
-## 4. 학술 논문 1:1 매핑 공식 Jupyter 노트북 (Notebooks Suite)
+## 4. 재현성을 위한 Jupyter 노트북 (Notebooks Suite)
 
 모든 분석과 시각화는 `notebooks/` 디렉토리 아래의 4개 대분류 노트북을 통해 셀별로 즉시 실행하고 논문 섹션별 결과물을 재현할 수 있습니다:
 
@@ -206,7 +199,7 @@ notebooks/
 │   └── EMFN 아키텍처 해부, 복합 허들 손실 함수 수식 검증, 4대 설계 축 종합 어블레이션 매트릭스 실증
 │
 └── 04_dispatch_spectrum_and_operational_analysis.ipynb [Paper Sec 6: 일중 급전 스펙트럼 & 예측 시각화]
-    └── 일중 급전 스펙트럼 전 구간 헤드투헤드 1위, Val/Test 예측 추종 곡선, 무단절 역사적 롤아웃 전이 시각화
+    └── 일중 급전 스펙트럼 전 구간 헤드투헤드 1위, Val/Test 예측 추종 곡선, 장기 지평(+12h, +24h) 동적 램프 추종 심층 분석
 ```
 
 ---
@@ -225,7 +218,7 @@ Wind Power/
 │       └── merged_dataset.parquet               # 단위 보정 및 결측 정제 완료된 공식 단일 마스터셋
 ├── models/
 │   └── checkpoints/                             # EMFN 다중 지평(+1h~+24h) 학습 가중치 (*.pt)
-├── notebooks/                                   # [A to Z 연구 재현] 학술 논문 1:1 매핑 공식 Jupyter 노트북 4종
+├── notebooks/                                   # [A to Z 연구 재현] Jupyter 노트북
 │   ├── 01_data_pipeline_and_physics_eda.ipynb   # [Sec 3] 데이터 파이프라인, 단위 보정, AWS 결합 및 영발전 규명
 │   ├── 02_baseline_benchmarks_and_failure_modes.ipynb # [Sec 4] 10대 베이스라인 벤치마크, 유계 위반 및 분산 수축 실증
 │   ├── 03_proposed_emfn_architecture_and_ablation.ipynb # [Sec 5] 제안 모델 EMFN 구조, 손실함수, 어블레이션 검증
@@ -264,10 +257,11 @@ Wind Power/
     │   └── archive/                             # 과거 중간 단계 테이블 보관소
     └── figures/                                 # 논문 투고용 고해상도 벡터/PNG 시각화 도표
         ├── intraday_dispatch_spectrum_decay_curve.png
-        ├── emfn_ablation_comparison.png
+        ├── multi_horizon_performance_decay_curve.png
         ├── emfn_test_forecast_+1h.png / +3h.png
-        ├── emfn_validation_forecast_+1h.png
-        └── emfn_historical_transition_forecast_plot.png
+        ├── emfn_validation_forecast_+1h.png / +3h.png
+        ├── emfn_forecast_horizon_12h_24h_sample.png
+        └── emfn_ablation_comparison.png
 ```
 
 ---

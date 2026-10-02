@@ -72,10 +72,10 @@ def plot_evaluation_forecast(
 
     # 1. Top Panel: Generation Tracking
     ax_main.plot(t, df_plot["y_true"], label="Actual Generation (Ground Truth)", color="#111827", lw=1.3, alpha=0.9)
-    ax_main.plot(t, df_plot["y_mean"], label=f"EMFN v3 Canonical Mean E[Y|X] ({horizon_label})", color="#2563eb", lw=1.4, alpha=0.95)
+    ax_main.plot(t, df_plot["y_mean"], label=f"EMFN Canonical Mean E[Y|X] ({horizon_label})", color="#2563eb", lw=1.4, alpha=0.95)
 
     if "y_median" in df_plot.columns:
-        ax_main.plot(t, df_plot["y_median"], label="EMFN v3 Bayes Median (L1-optimal)", color="#10b981", lw=1.1, ls="--", alpha=0.85)
+        ax_main.plot(t, df_plot["y_median"], label="EMFN Bayes Median (L1-optimal)", color="#10b981", lw=1.1, ls="--", alpha=0.85)
 
     # Physical Bounds
     ax_main.axhline(rated_capacity_mwh, color="#dc2626", ls=":", lw=1.2, label=f"Rated Capacity ({rated_capacity_mwh} MW)")
@@ -88,7 +88,7 @@ def plot_evaluation_forecast(
 
     # Title
     zoom_text = f" [Zoom: {zoom_range[0]} ~ {zoom_range[1]}]" if zoom_range else ""
-    ax_main.set_title(f"EMFN v3 Wind Power Forecast Tracking: {dataset_name} ({horizon_label}){zoom_text}",
+    ax_main.set_title(f"EMFN Wind Power Forecast Tracking: {dataset_name} ({horizon_label}){zoom_text}",
                       fontsize=13, fontweight="bold", pad=10)
 
     # Metrics Box

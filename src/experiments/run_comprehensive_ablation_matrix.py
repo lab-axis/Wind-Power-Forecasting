@@ -1,16 +1,16 @@
 """
-Comprehensive 4-Axis Ablation Matrix Experiment Script for EMFN v3
+Comprehensive 4-Axis Ablation Matrix Experiment Script for EMFN
 - Evaluates on 2025 Test Set (8,760 hours, 100% complete, 0% missing)
 - Horizons: +1h Ahead and +3h Ahead
 - Ablation Axes:
-  1. Full EMFN v3 (+Weather) [Proposed Baseline]
-  2. EMFN v3 (Endogenous Only) [Axis 1: Meteorological Conditioning]
-  3. EMFN v3 (w/o HF Skips) [Axis 2: High-Frequency Momentum Skips & AR Shortcut]
-  4. EMFN v3 (w/o Selective Gate) [Axis 3: Domain-Specific Weather Gating for Zero Head]
-  5. EMFN v3 (Deterministic Huber Regressor) [Axis 4: Physical Hurdle Head vs Unconstrained Regression]
+  1. Full EMFN (+Weather, Proposed) [Proposed Baseline]
+  2. EMFN (Endogenous Only) [Axis 1: Meteorological Conditioning]
+  3. EMFN (w/o HF Skips) [Axis 2: High-Frequency Momentum Skips & AR Shortcut]
+  4. EMFN (w/o Selective Gate) [Axis 3: Domain-Specific Weather Gating for Zero Head]
+  5. EMFN (Deterministic Huber Regressor) [Axis 4: Physical Hurdle Head vs Unconstrained Regression]
 - Outputs:
-  - reports/tables/emfn_v3_comprehensive_ablation_matrix.csv
-  - reports/figures/emfn_v3_ablation_comparison.png
+  - reports/tables/emfn_comprehensive_ablation_matrix.csv
+  - reports/figures/emfn_ablation_comparison.png
 """
 
 import os
@@ -25,7 +25,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.models.emfn_v3_trainer import train_and_evaluate_emfn_v3
+from src.models.emfn_trainer import train_and_evaluate_emfn
 
 torch.manual_seed(42)
 np.random.seed(42)
@@ -35,7 +35,7 @@ if torch.cuda.is_available():
 
 def main():
     print("=" * 85)
-    print("   EMFN v3 Comprehensive 4-Axis Ablation Matrix Experiment (2025 Test Set)   ")
+    print("   EMFN Comprehensive 4-Axis Ablation Matrix Experiment (2025 Test Set)   ")
     print("=" * 85)
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -94,7 +94,7 @@ def main():
     # Ablation configurations
     configs = [
         {
-            "name": "Full EMFN v3 (+Weather)",
+            "name": "Full EMFN (+Weather, Proposed)",
             "include_weather": True,
             "use_hf_skips": True,
             "use_selective_gate": True,
@@ -102,7 +102,7 @@ def main():
             "description": "Full Task-Decoupled Dual-Route Hurdle Network",
         },
         {
-            "name": "EMFN v3 (Endogenous Only)",
+            "name": "EMFN (Endogenous Only)",
             "include_weather": False,
             "use_hf_skips": True,
             "use_selective_gate": True,
@@ -110,7 +110,7 @@ def main():
             "description": "Ablation: Exclude AWS meteorological features",
         },
         {
-            "name": "EMFN v3 (w/o HF Skips)",
+            "name": "EMFN (w/o HF Skips)",
             "include_weather": True,
             "use_hf_skips": False,
             "use_selective_gate": True,
@@ -118,7 +118,7 @@ def main():
             "description": "Ablation: Exclude high-frequency momentum skips & AR shortcut",
         },
         {
-            "name": "EMFN v3 (w/o Selective Gate)",
+            "name": "EMFN (w/o Selective Gate)",
             "include_weather": True,
             "use_hf_skips": True,
             "use_selective_gate": False,
@@ -126,7 +126,7 @@ def main():
             "description": "Ablation: Exclude domain-specific cut-in gating for zero head",
         },
         {
-            "name": "EMFN v3 (Deterministic Regression)",
+            "name": "EMFN (Deterministic Regression)",
             "include_weather": True,
             "use_hf_skips": True,
             "use_selective_gate": True,
@@ -152,7 +152,7 @@ def main():
 
         for h in horizons:
             print(f"  --> Training for Horizon +{h}h Ahead...")
-            summary, y_mean, preds_dict = train_and_evaluate_emfn_v3(
+            summary, y_mean, preds_dict = train_and_evaluate_emfn(
                 train_data=train_data,
                 val_data=val_data,
                 test_data=test_data,
@@ -187,13 +187,13 @@ def main():
 
     # Save to DataFrame
     df_results = pd.DataFrame(all_results)
-    out_table_path = "reports/tables/emfn_v3_comprehensive_ablation_matrix.csv"
+    out_table_path = "reports/tables/emfn_comprehensive_ablation_matrix.csv"
     os.makedirs(os.path.dirname(out_table_path), exist_ok=True)
     df_results.to_csv(out_table_path, index=False, encoding="utf-8-sig")
     print(f"\n[+] Saved Comprehensive Ablation Matrix Table to: {out_table_path}")
 
     # Generate Comparative Visualization
-    plot_ablation_results(df_results, out_fig_path="reports/figures/emfn_v3_ablation_comparison.png")
+    plot_ablation_results(df_results, out_fig_path="reports/figures/emfn_ablation_comparison.png")
 
     print("\n=== Comprehensive Ablation Matrix Run Completed Successfully! ===")
 
@@ -210,7 +210,7 @@ def plot_ablation_results(df_res: pd.DataFrame, out_fig_path: str):
     df_3h = df_res[df_res["horizon"] == "+3h"].copy()
 
     model_names_short = [
-        "Full v3",
+        "Full EMFN",
         "w/o Weather",
         "w/o HF Skips",
         "w/o Gate",
@@ -266,7 +266,7 @@ def plot_ablation_results(df_res: pd.DataFrame, out_fig_path: str):
     ax4.grid(True, linestyle="--", alpha=0.4, axis="y")
     ax4.legend()
 
-    plt.suptitle("EMFN v3 Comprehensive 4-Axis Ablation Study (2025 Test: 8,760h)", fontsize=13, fontweight="bold")
+    plt.suptitle("EMFN Comprehensive 4-Axis Ablation Study (2025 Test: 8,760h)", fontsize=13, fontweight="bold")
     plt.tight_layout()
     plt.savefig(out_fig_path, dpi=300, bbox_inches="tight")
     plt.close()

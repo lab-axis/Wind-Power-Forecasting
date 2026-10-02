@@ -21,7 +21,7 @@ import pandas as pd
 import torch
 import matplotlib.pyplot as plt
 
-from src.models.emfn_v3_trainer import train_and_evaluate_emfn_v3
+from src.models.history.emfn_v3_trainer import train_and_evaluate_emfn_v3
 
 torch.manual_seed(42)
 np.random.seed(42)

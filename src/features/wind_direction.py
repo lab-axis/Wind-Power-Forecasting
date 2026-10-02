@@ -47,3 +47,16 @@ def add_wind_direction_components(
         df_out["wind_dir_sin"] = sin_v
         df_out["wind_dir_cos"] = cos_v
     return df_out
+
+
+# Backward compatibility and alternate naming aliases
+encode_wind_direction = wind_direction_to_sin_cos
+decode_wind_direction = sin_cos_to_wind_direction
+
+__all__ = [
+    "wind_direction_to_sin_cos",
+    "sin_cos_to_wind_direction",
+    "add_wind_direction_components",
+    "encode_wind_direction",
+    "decode_wind_direction",
+]

@@ -91,7 +91,7 @@
 | 5 | **CNN-LSTM (+Weather)** | 1.5453 | 2.4681 | 7.36% | 0.7217 | 0.8568 | 42.73% | +3.06% | +0.0241 |
 | 6 | **DLinear (+Weather)** | 1.5897 | 2.4430 | 7.57% | 0.7273 | 0.8539 | 43.96% | +2.32% | +0.0253 |
 
-- **결과 데이터**: [`reports/tables/weather_augmented_benchmark_comparison.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/weather_augmented_benchmark_comparison.csv)
+- **결과 데이터**: [`reports/tables/archive/weather_augmented_benchmark_comparison.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/archive/weather_augmented_benchmark_comparison.csv)
 - **기상 주입 전/후 비교 시각화**: [`reports/figures/weather_impact_comparison.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/weather_impact_comparison.png)
 
 ---
@@ -177,7 +177,7 @@
 2. [`src/models/hurdle_beta.py`](file:///d:/InternetDownload/Lab/Wind%20Power/src/models/hurdle_beta.py): 수치 안정 Bernoulli-Beta NLL, 이원 점 예측 디코더, Zero Head ECE 보정 평가 함수.
 3. [`src/models/emfn.py`](file:///d:/InternetDownload/Lab/Wind%20Power/src/models/emfn.py): 분해 + 다중스케일 TCN + 외생 Cross-Attention + Causal State + AR Shortcut + Hurdle Head.
 4. [`src/models/emfn_trainer.py`](file:///d:/InternetDownload/Lab/Wind%20Power/src/models/emfn_trainer.py): 조기종료 및 Canonical 표준 평가 파이프라인.
-5. [`notebooks/01_data_preprocessing_and_eda.ipynb`](file:///d:/InternetDownload/Lab/Wind%20Power/notebooks/01_data_preprocessing_and_eda.ipynb): 풍속 구간별 제로 실증 분석 및 단위 불연속성 보정 EDA.
+5. [`notebooks/01_data_pipeline_and_physics_eda.ipynb`](file:///d:/InternetDownload/Lab/Wind%20Power/notebooks/01_data_pipeline_and_physics_eda.ipynb): 풍속 구간별 제로 실증 분석 및 단위 불연속성 보정 EDA.
 
 ---
 
@@ -192,7 +192,7 @@
 | **+3h** | **EMFN Full (Real AWS CA + Hurdle)** | 1.6087 | 7.66% | 2.4545 | 11.69% | 0.7224 | 0.8585 | 44.92% | 1.5620 (7.44%) | +2.90% | **0.8553** | 0.4731 | 0.1082 | 0.0344 |
 | **+3h** | **EMFN Endo (Endogenous + Hurdle)** | **1.5837** | **7.54%** | **2.4332** | **11.59%** | **0.7272** | **0.8549** | **44.22%** | **1.5273 (7.27%)** | +3.56% | 0.8537 | **0.4752** | **0.1065** | **0.0197** |
 
-- **결과 데이터**: [`reports/tables/emfn_benchmark_results.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/emfn_benchmark_results.csv)
+- **결과 데이터**: [`reports/tables/archive/emfn_benchmark_results.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/archive/emfn_benchmark_results.csv)
 - **1주일 예측 및 Zero 확률 시각화**: [`reports/figures/emfn_forecast_hurdle_sample.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/emfn_forecast_hurdle_sample.png)
 
 ### 8.2. 핵심 학술 분석 및 시사점
@@ -227,8 +227,8 @@ Weather-TCN의 다채널 Causal TCN 백본을 주 예측 경로로 도입하고 
 | **+3h** | **EMFN v2 (+Weather)** | **1.5134** | **7.21%** | **2.3493** | **11.19%** | **0.7478** | **0.8664** | **41.85%** | **1.4864** | **+1.78%** | **0.8725** | **0.5130** | 0.0524 | **0.00%** |
 | **+3h** | EMFN v2 (Endogenous Only) | 1.6457 | 7.84% | 2.4972 | 11.89% | 0.7150 | 0.8478 | 45.50% | 1.5732 | +4.41% | 0.8719 | 0.5051 | 0.0145 | **0.00%** |
 
-- **결과 테이블**: [`reports/tables/emfn_v2_benchmark_results.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/emfn_v2_benchmark_results.csv)
-- **1주일 예측 및 Zero 확률 시각화**: [`reports/figures/emfn_v2_forecast_hurdle_sample.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/emfn_v2_forecast_hurdle_sample.png)
+- **결과 테이블**: [`reports/tables/archive/emfn_v2_benchmark_results.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/archive/emfn_v2_benchmark_results.csv)
+- **1주일 예측 및 Zero 확률 시각화**: [`reports/figures/archive/emfn_v2_forecast_hurdle_sample.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/archive/emfn_v2_forecast_hurdle_sample.png)
 
 ### 9.2. EMFN v2 구조적 분석 및 한계 관측
 
@@ -256,8 +256,8 @@ Weather-TCN의 다채널 Causal TCN 백본을 주 예측 경로로 도입하고 
 | **+3h** | **EMFN v3 (+Weather)** | **1.5251** | **7.26%** | **2.3239** | **11.07%** | **0.7532** | **0.8712** | **42.17%** | **1.4723** | **0.8894** | **0.5784** | **0.0956** | 0.0366 | **0.00%** |
 | **+3h** | EMFN v3 (Endogenous Only) | 1.6572 | 7.89% | 2.4962 | 11.89% | 0.7153 | 0.8489 | 45.82% | 1.5743 | 0.8753 | 0.5339 | 0.0988 | 0.0292 | **0.00%** |
 
-- **결과 테이블**: [`reports/tables/emfn_v3_benchmark_results.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/emfn_v3_benchmark_results.csv)
-- **1주일 예측 및 Hurdle 확률 시각화**: [`reports/figures/emfn_v3_forecast_hurdle_sample.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/emfn_v3_forecast_hurdle_sample.png)
+- **결과 테이블**: [`reports/tables/archive/emfn_v3_benchmark_results.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/archive/emfn_v3_benchmark_results.csv)
+- **1주일 예측 및 Hurdle 확률 시각화**: [`reports/figures/emfn_forecast_hurdle_sample.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/emfn_forecast_hurdle_sample.png)
 
 ### 10.2. EMFN 3단계 진화(v1 -> v2 -> v3) 및 베이스라인 종합 대조표
 
@@ -320,8 +320,8 @@ Weather-TCN의 다채널 Causal TCN 백본을 주 예측 경로로 도입하고 
 | **+3h** | EMFN v3 (w/o Selective Gate) | 1.4888 | 2.2900 | 0.7604 | 0.8706 | 0.5204 | 0.0306 | **0.00% (0건, 0.025 MWh)** | 축 3: 제로 헤드 특화 기상 게이트 배제 |
 | **+3h** | EMFN v3 (Deterministic Huber) | 1.4510 | 2.2990 | 0.7585 | N/A | N/A | N/A | **1.75% (153건, -0.492 MWh)** | 축 4: Hurdle 제거 후 비제약 회귀 |
 
-- **공식 어블레이션 테이블**: [`reports/tables/emfn_v3_comprehensive_ablation_matrix.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/emfn_v3_comprehensive_ablation_matrix.csv)
-- **어블레이션 4개 축 비교 시각화**: [`reports/figures/emfn_v3_ablation_comparison.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/emfn_v3_ablation_comparison.png)
+- **공식 어블레이션 테이블**: [`reports/tables/emfn_comprehensive_ablation_matrix.csv`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/tables/emfn_comprehensive_ablation_matrix.csv)
+- **어블레이션 4개 축 비교 시각화**: [`reports/figures/emfn_ablation_comparison.png`](file:///d:/InternetDownload/Lab/Wind%20Power/reports/figures/emfn_ablation_comparison.png)
 
 ### 11.2. 핵심 학술적 실증 분석 (Reviewer 설득 논리)
 
@@ -430,7 +430,7 @@ Weather-TCN의 다채널 Causal TCN 백본을 주 예측 경로로 도입하고 
 
 ---
 
-## 13. 결론 및 향후 계획
+## 13. 결론
 
 1. **학술 연구 완결성 확보**:
    - 10대 베이스라인 벤치마크(단변량 M1 + 다변량 M3, 8,760시간 완전 평가)
@@ -438,5 +438,3 @@ Weather-TCN의 다채널 Causal TCN 백본을 주 예측 경로로 도입하고 
    - 제안 모델 EMFN 3단계 진화(v1 -> v2 -> v3) 및 정량적 음의 전이 해소 검증
    - 4개 축 종합 어블레이션 매트릭스를 통한 구조적 타당성 완벽 입증
    - 전 모델 물리적 유계 위반율(0% vs 타 모델 0.55% ~ 16.91%)의 정량적 대조표 구축
-2. **논문 원고(Draft) 작성 착수 준비 완료**:
-   - 확정된 2025 Test Set 단독 평가를 기반으로 본문 및 표, 그림을 일관되게 정리하여 SCI급 최상위 저널 투고용 논문 원고 집필을 즉시 진행할 수 있는 상태에 도달함.

@@ -108,7 +108,7 @@ timeline
   - `notebooks/01_data_pipeline_and_physics_eda.ipynb` [Paper Sec 3]: 원본 발전량 2025-02-01 단위 불연속성(Wh $\rightarrow$ kWh) 보정, 새별오름 AWS 기상 결합, 시계열 통계, 풍속 구간별 영발전 조건부 확률(Cut-in 임계치 규명) 및 2025년 단독 공식 테스트셋(결측률 0.00%) 분할.
   - `notebooks/02_baseline_benchmarks_and_failure_modes.ipynb` [Paper Sec 4]: 10대 베이스라인 모델 인터페이스, 일중 급전 스펙트럼(+1h ~ +12h) 다중 지평 성능 비교, 베이스라인의 물리적 유계 위반율(5% ~ 18%) 정량 확인, +24h 분산 수축(Variance Collapse / Median Shrinkage) 실증.
   - `notebooks/03_proposed_emfn_architecture_and_ablation.ipynb` [Paper Sec 5]: 제안 모델 EMFN 구조 및 파라미터 확인, 복합 허들 손실 함수 수식 검증, 4대 축 종합 어블레이션 매트릭스(기상 결합 음의 전이 극복, HF Skips, Selective Gate, Hurdle Head 자체 유계 보장) 실증.
-  - `notebooks/04_dispatch_spectrum_and_operational_analysis.ipynb` [Paper Sec 6]: 일중 급전 스펙트럼 전 구간 헤드투헤드 딥러닝 1위 및 +6h 전체 1위 ($R^2=0.5795$) 실증, Validation/Test 예측 추종 곡선 및 신뢰구간 플롯, 학습말기-미래 연속 롤아웃 전이 시각화, 전력계통 급전 운영 시사점 도출.
+  - `notebooks/04_dispatch_spectrum_and_operational_analysis.ipynb` [Paper Sec 6]: 일중 급전 스펙트럼 전 구간 헤드투헤드 딥러닝 1위 및 +6h 전체 1위 ($R^2=0.5795$) 실증, Validation/Test 예측 추종 곡선 및 신뢰구간 플롯, 장기 지평(+12h, +24h) 동적 램프 추종 시각화, 전력계통 급전 운영 시사점 도출.
 - **사전 실행 및 무결성 검증**: 모든 4개 노트북은 셀 단위 오류율 0%(`Execution Error: False`)로 완벽하게 실행되었으며, 데이터프레임과 고해상도 시각화 도표가 내장되어 있어 코드 전체를 뒤지지 않고도 노트북 실행만으로 연구의 A to Z를 완벽히 파악하고 논문 투고용 결과물을 즉시 재현 가능하도록 완성함.
 
 

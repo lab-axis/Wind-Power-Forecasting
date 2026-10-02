@@ -83,6 +83,8 @@ def compute_expected_calibration_error(
     n_bins: int = 10,
 ) -> float:
     """Computes Expected Calibration Error (ECE)."""
+    y_true_binary = np.asarray(y_true_binary, dtype=float).ravel()
+    probs = np.asarray(probs, dtype=float).ravel()
     bin_boundaries = np.linspace(0, 1, n_bins + 1)
     ece = 0.0
     for i in range(n_bins):

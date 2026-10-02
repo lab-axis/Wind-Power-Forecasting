@@ -20,8 +20,8 @@ import torch
 import matplotlib.pyplot as plt
 
 from src.features.time_features import add_cyclical_time_features
-from src.models.emfn import EMFN
-from src.models.emfn_trainer import train_emfn_model
+from src.models.history.emfn_v1 import EMFN
+from src.models.history.emfn_v1_trainer import train_emfn_model
 
 
 def run_pipeline():

@@ -17,7 +17,7 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from sklearn.metrics import roc_auc_score, average_precision_score, brier_score_loss
 
-from src.models.emfn_v2 import EMFN_v2, CompositeHurdleLoss
+from src.models.history.emfn_v2 import EMFN_v2, CompositeHurdleLoss
 from src.utils.metrics import evaluate_wind_forecast
 
 

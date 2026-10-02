@@ -29,7 +29,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.models.emfn_v3_trainer import train_and_evaluate_emfn_v3
+from src.models.emfn_trainer import train_and_evaluate_emfn as train_and_evaluate_emfn_v3
 from src.models.lightgbm_model import SangmyeongLightGBMForecaster
 from src.models.dlinear import DLinearForecaster
 from src.models.cnn_lstm import CNNLSTMForecaster
@@ -359,7 +359,7 @@ def plot_multi_horizon_decay(df: pd.DataFrame, out_fig: str):
     horizons_str = ["+1h", "+3h", "+12h", "+24h"]
 
     target_models = [
-        ("EMFN v3 (Proposed)", "#2563eb", "o", 2.2, "-"),
+        ("EMFN (Proposed)", "#2563eb", "o", 2.2, "-"),
         ("LightGBM (+Weather)", "#059669", "s", 1.8, "--"),
         ("TCN (+Weather)", "#dc2626", "^", 1.8, "--"),
         ("LSTM (+Weather)", "#d97706", "d", 1.5, ":"),
@@ -425,7 +425,7 @@ def plot_extended_time_series(df_test: pd.DataFrame, preds_dict: dict, out_fig: 
         y_true_12 = p12["y_true"][zoom_slice]
         y_mean_12 = p12["y_mean"][zoom_slice]
         ax12.plot(t, y_true_12, label="Actual Generation (MWh)", color="#111827", lw=1.3)
-        ax12.plot(t, y_mean_12, label="EMFN v3 Canonical Mean (+12h Ahead)", color="#2563eb", lw=1.5, ls="--")
+        ax12.plot(t, y_mean_12, label="EMFN Canonical Mean (+12h Ahead)", color="#2563eb", lw=1.5, ls="--")
         ax12.axhline(21.0, color="#dc2626", ls=":", lw=1.0, label="Rated Capacity (21 MW)")
         ax12.set_ylabel("Power (MWh)", fontsize=10, fontweight="bold")
         ax12.set_title("Medium-Term Dispatch Forecast: +12h Ahead (1-Week Sample)", fontsize=11, fontweight="bold")
@@ -438,7 +438,7 @@ def plot_extended_time_series(df_test: pd.DataFrame, preds_dict: dict, out_fig: 
         y_true_24 = p24["y_true"][zoom_slice]
         y_mean_24 = p24["y_mean"][zoom_slice]
         ax24.plot(t, y_true_24, label="Actual Generation (MWh)", color="#111827", lw=1.3)
-        ax24.plot(t, y_mean_24, label="EMFN v3 Canonical Mean (+24h Ahead Day-Ahead)", color="#059669", lw=1.5, ls="--")
+        ax24.plot(t, y_mean_24, label="EMFN Canonical Mean (+24h Ahead Day-Ahead)", color="#059669", lw=1.5, ls="--")
         ax24.axhline(21.0, color="#dc2626", ls=":", lw=1.0, label="Rated Capacity (21 MW)")
         ax24.set_ylabel("Power (MWh)", fontsize=10, fontweight="bold")
         ax24.set_title("Day-Ahead Market Clearing Forecast: +24h Ahead (1-Week Sample)", fontsize=11, fontweight="bold")

@@ -23,7 +23,7 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 if PROJECT_ROOT not in sys.path:
     sys.path.insert(0, PROJECT_ROOT)
 
-from src.models.emfn_v3 import EMFN_v3, CompositeHurdleLossV3
+from src.models.history.emfn_v3 import EMFN_v3, CompositeHurdleLossV3
 from src.utils.metrics import evaluate_wind_forecast
 
 
