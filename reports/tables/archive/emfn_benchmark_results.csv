@@ -1,0 +1,5 @@
+Horizon,Model Variant,MAE_Canonical (MWh),nMAE_Canonical (%),RMSE_Canonical (MWh),nRMSE_Canonical (%),R^2_Canonical,CORR,WAPE_Canonical (%),MAE_Median (MWh),Median_Gain (%),Zero_AUROC,Zero_AUPRC,Zero_Brier,Zero_ECE,Epochs,Train_Time (s)
++1h,EMFN_Full (Exog CA + Hurdle),0.9932,4.73,1.4467,6.89,0.9036,0.955,27.72,0.9055,8.83,0.9309,0.6737,0.0769,0.0144,26,48.9
++1h,EMFN_Ablation (Endogenous Only + Hurdle),0.9456,4.5,1.4017,6.67,0.9095,0.9556,26.39,0.8706,7.93,0.9253,0.6463,0.0803,0.0147,27,24.0
++3h,EMFN_Full (Exog CA + Hurdle),1.6087,7.66,2.4545,11.69,0.7224,0.8585,44.92,1.562,2.9,0.8553,0.4731,0.1082,0.0344,15,26.1
++3h,EMFN_Ablation (Endogenous Only + Hurdle),1.5837,7.54,2.4332,11.59,0.7272,0.8549,44.22,1.5273,3.56,0.8537,0.4752,0.1065,0.0197,21,19.0

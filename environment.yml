@@ -1,0 +1,30 @@
+name: wind_power
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.11
+  - pip
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - lightgbm
+  - pyarrow
+  - fastparquet
+  - statsmodels
+  - matplotlib
+  - seaborn
+  - tqdm
+  - pyyaml
+  - ipykernel
+  - jupyterlab
+  - notebook
+  - pip:
+      - --extra-index-url https://download.pytorch.org/whl/cu124
+      - torch
+      - torchvision
+      - torchaudio
+      - prophet
+      - einops
+      - pytorch-tcn

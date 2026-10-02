@@ -1,0 +1,127 @@
+project:
+  name: "sangmyeong_wind_generation_forecasting"
+  description: "인접 기상관측 정보와 시계열 모델을 활용한 상명풍력발전소 시간별 발전량(MWh) 예측"
+  random_seed: 42
+
+paths:
+  raw_generation_file: "data/raw/generation/한국중부발전(주)_(AI 친화 데이터)풍력 발전 실적(상명풍력)_20260330.csv"
+  raw_weather_saebyeol_info: "data/raw/weather/saebyeol_883/제주_관측환경정보_제주북부중산간_새별오름_883.xlsx"
+  raw_weather_saebyeol_dir: "data/raw/weather/saebyeol_883"
+  raw_weather_geumak_dir: "data/raw/weather/jeju_geumak_993"
+  interim_dir: "data/interim"
+  processed_dir: "data/processed"
+  models_dir: "models/checkpoints"
+  reports_dir: "reports"
+
+plant_specs:
+  plant_name: "상명풍력발전소"
+  location: "제주특별자치도 제주시 한림읍 상명리"
+  capacity_mw: 21.0  # 3.0 MW x 7기
+  turbine_count: 7
+  max_hourly_mwh: 21.0
+  target_col: "generation_mwh"
+  raw_col: "raw_generation"
+  time_col: "datetime"
+  interval_hours: 1
+
+weather_stations:
+  primary:
+    id: 883
+    name: "새별오름"
+    address: "제주시 애월읍 봉성리 4554-22"
+    latitude: "33° 21' 44\""
+    longitude: "126° 21' 35\""
+    elevation_m: 435.0
+    approx_distance_km: 6.5
+    start_date: "2017-10-30"
+    elements: ["기온", "풍향", "풍속", "강수량", "강수유무", "기압", "습도", "적설"]
+  secondary:
+    id: 993
+    name: "제주금악"
+    status: "reserved_for_spatial_validation"
+    approx_distance_km: 1.5
+    start_date: "2024-04-06"
+    use_in_initial_phase: false
+
+# 시계열 분할 (결측치 0%의 완전 무결한 3개년: 2023 ~ 2025)
+data_splits:
+  study_period:
+    start: "2023-01-01 01:00:00"
+    end: "2025-12-31 23:00:00"
+    total_hours: 26303
+    missing_hours: 0  # 결측치 0% (완전 무결)
+  train:
+    start: "2023-01-01 01:00:00"
+    end: "2024-06-30 23:00:00"
+    hours: 13127
+    ratio_pct: 49.9
+  validation:
+    start: "2024-07-01 00:00:00"
+    end: "2024-12-31 23:00:00"
+    hours: 4416
+    ratio_pct: 16.8
+  test:
+    start: "2025-01-01 00:00:00"
+    end: "2025-12-31 23:00:00"
+    hours: 8760
+    ratio_pct: 33.3
+
+modeling:
+  lookback_hours: 24
+  forecast_horizons:
+    h1: 1
+    h3: 3
+    h6: 6
+    h12: 12
+    h24: 24
+
+feature_sets:
+  m1_generation_only:
+    target: "generation_mwh"
+    features: ["generation_mwh"]
+  m2_generation_wind:
+    target: "generation_mwh"
+    features: ["generation_mwh", "wind_speed", "wind_dir_sin", "wind_dir_cos"]
+  m3_full_weather:
+    target: "generation_mwh"
+    features:
+      - "generation_mwh"
+      - "wind_speed"
+      - "wind_dir_sin"
+      - "wind_dir_cos"
+      - "temperature"
+      - "humidity"
+      - "pressure"
+  m4_full_with_rain:
+    target: "generation_mwh"
+    features:
+      - "generation_mwh"
+      - "wind_speed"
+      - "wind_dir_sin"
+      - "wind_dir_cos"
+      - "temperature"
+      - "humidity"
+      - "pressure"
+      - "precipitation"
+
+evaluation_metrics:
+  absolute_errors:
+    - "mae"        # Mean Absolute Error (MWh)
+    - "rmse"       # Root Mean Squared Error (MWh)
+    - "mse"        # Mean Squared Error (MWh^2)
+  normalized_errors:
+    - "nmae_pct"   # Normalized MAE (% of 21.0 MW rated capacity)
+    - "nrmse_pct"  # Normalized RMSE (% of 21.0 MW rated capacity)
+  relative_errors:
+    - "rse"        # Relative Squared Error (Standard benchmark for Informer/PatchTST)
+    - "rrse"       # Root Relative Squared Error
+    - "rae"        # Relative Absolute Error
+  percentage_and_market:
+    - "wape_pct"   # Weighted Absolute Percentage Error (%)
+    - "smape_pct"  # Symmetric MAPE (%)
+  fit_and_correlation:
+    - "r2"         # Coefficient of Determination
+    - "corr"       # Pearson Correlation Coefficient (r)
+  bias_and_inequality:
+    - "mbe"        # Mean Bias Error (Over/Under-forecast diagnosis)
+    - "tic"        # Theil's Inequality Coefficient (Theil's U)
