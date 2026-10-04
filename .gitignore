@@ -45,3 +45,11 @@ data/raw/weather/jeju_geumak_993/
 
 # Checkpoint test predictions (keep core weights *.pt)
 # models/checkpoints/*_preds.pt
+
+# Local preservation and reproducible run artifacts (manifests remain in reports)
+.experiment_archive/
+models/runs/
+models/checkpoints/*_test_preds.npz
+models/checkpoints/archive/pre_correction_20261004/
+reports/archive/pre_correction_20261004/
+reports/figures/archive/pre_correction_20261004/

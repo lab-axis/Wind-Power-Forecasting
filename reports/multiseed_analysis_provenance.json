@@ -1,0 +1,22 @@
+{
+  "run_id": "crps_multiseed_20261004T175005+0900",
+  "source_hashes": {
+    "src/experiments/analyze_multiseed_crps.py": "d2ba5a8470a75374b148a7c86b0dd6ff5553fbbb636ea4861ef100a6be1ab4cf",
+    "src/experiments/report_multiseed_crps.py": "9c4554e80331a41725f31d2d36922cf3dab24a93e68ab3d9ccedd79c658cd20f",
+    "src/utils/paired_uncertainty.py": "8e37f0129d7e10d61490636a813aeedc4da1d7501cd6ee79054c0447e40c15b9",
+    "test_paired_uncertainty.py": "58995c16d521c333b5ce7406d38077c3c2da73b8eb1c15ba9e425bf35a7e3fe5"
+  },
+  "analysis_source_sha256": "9da2005a729963ab7c4205024e3f331ac597aecd7beea698b856a860c5498235",
+  "artifact_hashes": {
+    "reports/tables/multiseed_crps_grid_sensitivity.csv": "00641a3d55303b79934dbc9b96635d2fcd628e76daf273488a4bc7846286cb0e",
+    "reports/tables/multiseed_crps_horizon_mean.csv": "9868ae93006fdaa0f1cdc659e286ccf5d2894f5dbda3bf49bbc7661a6f1a9345",
+    "reports/tables/multiseed_crps_metrics.csv": "54f2f0a1a64efa79727b1838744ab83259b83b9ddd0e59f21e4aa41d102973e4",
+    "reports/tables/multiseed_crps_paired_intervals.csv": "1e2cedb90826a309c979ce531f4c9a7617cac3e2bbbc0891724e65cc5d97a4c3",
+    "reports/tables/multiseed_crps_selection.csv": "66a41e4e04711e0b3a5e0868814e96575c3dcac0264aee1419e624995bd5ef25",
+    "reports/tables/multiseed_crps_summary.csv": "f98ded3747a0ce27ea9b366d3a5774a36de078ab45057fa5f348af75d1926fd9",
+    "reports/tables/multiseed_lightgbm_seed_spread.csv": "3cf0c411bc4492bb468ac33ec8d3cf45de04e0bd37d55fa5c06a89f6c84e6539",
+    "reports/figures/multiseed_crps_comparison.png": "1d8147422c57b56c641e34ea1a86313df99264dcf01a851f9c7601a049a4d1a0",
+    "reports/multiseed_crps_results.md": "61be95d05cfe1fde15db5489a0f8c6549a693a1c1b53ab14d19639683fb88a99",
+    "reports/multiseed_crps_validation.json": "82abb3e65c6103d44ef10b968cf54da194d06473b6f26d5723f21037f7e91620"
+  }
+}

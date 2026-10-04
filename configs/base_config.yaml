@@ -43,13 +43,13 @@ weather_stations:
     start_date: "2024-04-06"
     use_in_initial_phase: false
 
-# 시계열 분할 (결측치 0%의 완전 무결한 3개년: 2023 ~ 2025)
+# 시계열 분할: 발전량은 완전 관측, 기상 결측 및 입력 가용성은 별도 관리.
 data_splits:
   study_period:
     start: "2023-01-01 01:00:00"
     end: "2025-12-31 23:00:00"
     total_hours: 26303
-    missing_hours: 0  # 결측치 0% (완전 무결)
+    missing_hours: 0  # generation only
   train:
     start: "2023-01-01 01:00:00"
     end: "2024-06-30 23:00:00"
@@ -72,6 +72,7 @@ modeling:
     h1: 1
     h3: 3
     h6: 6
+    h9: 9
     h12: 12
     h24: 24
 
@@ -104,6 +105,24 @@ feature_sets:
       - "pressure"
       - "precipitation"
 
+# Forward-looking research decision; not retroactive metadata for completed runs.
+# Current paper comparison: configs/multiseed_crps.yaml and run_multiseed_crps.
+# Historical corrected benchmark/ablation entry points retain their loss selection.
+evaluation_plan:
+  status: implemented_in_paper_six_model_multiseed_comparison
+  experiment_config: configs/multiseed_crps.yaml
+  presentation_config: configs/paper_presentation.yaml  # Display groups, not training scope.
+  primary_metric: crps
+  primary_direction: minimize
+  key_secondary_metric: zero_brier
+  key_secondary_direction: minimize
+  proposed_main_table: [crps, zero_brier, rmse, mae, zero_auprc]
+  probabilistic_rmse_forecast: predictive_mean
+  probabilistic_mae_forecast: predictive_median
+  deterministic_point_metrics: native_point_forecast_clipped
+  zero_probability_unavailable: report_not_applicable
+  decision_context: after_reviewing_2025_development_benchmark
+
 evaluation_metrics:
   absolute_errors:
     - "mae"        # Mean Absolute Error (MWh)
@@ -125,3 +144,27 @@ evaluation_metrics:
   bias_and_inequality:
     - "mbe"        # Mean Bias Error (Over/Under-forecast diagnosis)
     - "tic"        # Theil's Inequality Coefficient (Theil's U)
+
+# Corrected v3 protocol. These are fixed run settings, not selected on 2025 scores.
+protocol:
+  version: corrected-v3-2026-10-04
+  test_role: development_benchmark_previously_consulted
+  issue_time: latest_input_hour_end
+  observation_latency_hours: 0  # Offline assumption; actual availability is unverified.
+  max_ffill_hours: 3  # Fixed conservative policy; not an empirically optimal duration.
+  zero_definition: exact_observed_zero_mwh
+  incomplete_input_windows: exclude_without_compressing_time
+  common_evaluation: intersection_of_target_timestamps_per_horizon
+  crps_grid_points: 1001
+  seeds: [42]
+  train_epochs_emfn: 35
+  train_epochs_baseline: 25
+  train_epochs_transformer: 20
+  batch_size: 128
+  torch_threads: 4
+  cudnn_deterministic: false  # Seeded, but not bitwise deterministic on CUDA.
+  cudnn_benchmark: false
+  allow_tf32: false
+  point_metrics: clipped_to_physical_bounds
+  bounds_metrics: raw_unclipped_predictions
+  probabilistic_comparison: deterministic_baselines_are_dirac_distributions

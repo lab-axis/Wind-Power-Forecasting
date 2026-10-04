@@ -1,0 +1,85 @@
+model,horizon_hours,count,parent_common_count
+EMFN (Proposed),1,8736,8736
+DLinear (+Weather),1,8736,8736
+LSTM (+Weather),1,8736,8736
+GRU (+Weather),1,8736,8736
+CNN-LSTM (+Weather),1,8736,8736
+TCN (+Weather),1,8736,8736
+Transformer (+Weather),1,8736,8736
+LightGBM (+Weather),1,8736,8736
+Naive Persistence,1,8736,8736
+24h Diurnal Persistence,1,8736,8736
+ARIMA,1,8736,8736
+LightGBM (24h matched),1,8736,8736
+Quantile LightGBM (24h matched),1,8736,8736
+Hurdle Quantile LightGBM (24h matched),1,8736,8736
+EMFN (Proposed),3,8734,8734
+DLinear (+Weather),3,8734,8734
+LSTM (+Weather),3,8734,8734
+GRU (+Weather),3,8734,8734
+CNN-LSTM (+Weather),3,8734,8734
+TCN (+Weather),3,8734,8734
+Transformer (+Weather),3,8734,8734
+LightGBM (+Weather),3,8734,8734
+Naive Persistence,3,8734,8734
+24h Diurnal Persistence,3,8734,8734
+ARIMA,3,8734,8734
+LightGBM (24h matched),3,8734,8734
+Quantile LightGBM (24h matched),3,8734,8734
+Hurdle Quantile LightGBM (24h matched),3,8734,8734
+EMFN (Proposed),6,8731,8731
+DLinear (+Weather),6,8731,8731
+LSTM (+Weather),6,8731,8731
+GRU (+Weather),6,8731,8731
+CNN-LSTM (+Weather),6,8731,8731
+TCN (+Weather),6,8731,8731
+Transformer (+Weather),6,8731,8731
+LightGBM (+Weather),6,8731,8731
+Naive Persistence,6,8731,8731
+24h Diurnal Persistence,6,8731,8731
+ARIMA,6,8731,8731
+LightGBM (24h matched),6,8731,8731
+Quantile LightGBM (24h matched),6,8731,8731
+Hurdle Quantile LightGBM (24h matched),6,8731,8731
+EMFN (Proposed),9,8728,8728
+DLinear (+Weather),9,8728,8728
+LSTM (+Weather),9,8728,8728
+GRU (+Weather),9,8728,8728
+CNN-LSTM (+Weather),9,8728,8728
+TCN (+Weather),9,8728,8728
+Transformer (+Weather),9,8728,8728
+LightGBM (+Weather),9,8728,8728
+Naive Persistence,9,8728,8728
+24h Diurnal Persistence,9,8728,8728
+ARIMA,9,8728,8728
+LightGBM (24h matched),9,8728,8728
+Quantile LightGBM (24h matched),9,8728,8728
+Hurdle Quantile LightGBM (24h matched),9,8728,8728
+EMFN (Proposed),12,8725,8725
+DLinear (+Weather),12,8725,8725
+LSTM (+Weather),12,8725,8725
+GRU (+Weather),12,8725,8725
+CNN-LSTM (+Weather),12,8725,8725
+TCN (+Weather),12,8725,8725
+Transformer (+Weather),12,8725,8725
+LightGBM (+Weather),12,8725,8725
+Naive Persistence,12,8725,8725
+24h Diurnal Persistence,12,8725,8725
+ARIMA,12,8725,8725
+LightGBM (24h matched),12,8725,8725
+Quantile LightGBM (24h matched),12,8725,8725
+Hurdle Quantile LightGBM (24h matched),12,8725,8725
+EMFN (Proposed),24,8713,8713
+DLinear (+Weather),24,8713,8713
+LSTM (+Weather),24,8713,8713
+GRU (+Weather),24,8713,8713
+CNN-LSTM (+Weather),24,8713,8713
+TCN (+Weather),24,8713,8713
+Transformer (+Weather),24,8713,8713
+LightGBM (+Weather),24,8713,8713
+Naive Persistence,24,8713,8713
+24h Diurnal Persistence,24,8713,8713
+ARIMA,24,8713,8713
+LightGBM (24h matched),24,8713,8713
+Quantile LightGBM (24h matched),24,8713,8713
+Hurdle Quantile LightGBM (24h matched),24,8713,8713

@@ -1,0 +1,45 @@
+{
+  "run_id": "corrected_v3_20261004T005217+0900",
+  "status": "passed",
+  "benchmark_rows_verified": 60,
+  "ablation_artifact_pairs_verified": 8,
+  "emfn_checkpoints_reloaded": 6,
+  "checks": [
+    "raw data hashes",
+    "processed data hash",
+    "source snapshot hashes",
+    "prediction/checkpoint hashes",
+    "identical targets and issue times",
+    "raw/clipped arrays",
+    "recomputed point and bound metrics",
+    "CPU checkpoint reload agrees with CUDA recorded predictions within tolerance"
+  ],
+  "regression_tests": {
+    "command": "python -m unittest test_forecast_protocol -v",
+    "passed": 13,
+    "failed": 0
+  },
+  "notebooks": [
+    {
+      "file": "01_data_pipeline_and_physics_eda.ipynb",
+      "executed_code_cells": 4,
+      "errors": 0
+    },
+    {
+      "file": "02_baseline_benchmarks_and_failure_modes.ipynb",
+      "executed_code_cells": 3,
+      "errors": 0
+    },
+    {
+      "file": "03_proposed_emfn_architecture_and_ablation.ipynb",
+      "executed_code_cells": 3,
+      "errors": 0
+    },
+    {
+      "file": "04_dispatch_spectrum_and_operational_analysis.ipynb",
+      "executed_code_cells": 3,
+      "errors": 0
+    }
+  ],
+  "python_syntax": "passed"
+}

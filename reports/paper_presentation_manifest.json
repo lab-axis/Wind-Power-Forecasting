@@ -1,0 +1,46 @@
+{
+  "run_id": "crps_multiseed_20261004T175005+0900",
+  "status": "verified_subset_only",
+  "config": {
+    "updated": "2026-10-05",
+    "status": "working_layout_not_final_submission_roster",
+    "primary_metric": "crps",
+    "key_secondary_metric": "zero_brier",
+    "metrics": [
+      "crps",
+      "zero_brier",
+      "rmse",
+      "mae",
+      "zero_auprc"
+    ],
+    "max_comparators_excluding_emfn": 5,
+    "main_models": [
+      "EMFN (Proposed)",
+      "ARIMA",
+      "CNN-LSTM (+Weather)",
+      "LightGBM (24h matched)"
+    ],
+    "supplementary_probability_models": [
+      "EMFN (Proposed)",
+      "Quantile LightGBM (24h matched)",
+      "Hurdle Quantile LightGBM (24h matched)"
+    ],
+    "candidate_not_yet_in_current_view": "Naive Persistence",
+    "source_manifest": "reports/multiseed_crps_manifest.json",
+    "source_summary": "reports/tables/multiseed_crps_summary.csv",
+    "retain_all_results": true
+  },
+  "source_summary_sha256": "f98ded3747a0ce27ea9b366d3a5774a36de078ab45057fa5f348af75d1926fd9",
+  "presentation_config_sha256": "ac23e930fca9b6d5968c466739b1f50deafe36bdb3996ff504f56d2176ba16e5",
+  "exporter_sha256": "3bef9bbe22a66bb810d07d2e771632bf17946b91287239ab08fd645e55cc3980",
+  "outputs": {
+    "reports/tables/paper_main_standard_baselines.csv": {
+      "rows": 24,
+      "sha256": "009ddfd5ab2b7431f59e595d34e553990fb65a21282bd60fdfd78c5d9638aed8"
+    },
+    "reports/tables/paper_supplementary_probability.csv": {
+      "rows": 18,
+      "sha256": "be26506948fa24275dde407dccf43586b3337c01f01812153391b623336da169"
+    }
+  }
+}

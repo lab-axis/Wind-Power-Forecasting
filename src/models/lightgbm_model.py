@@ -137,8 +137,8 @@ class SangmyeongLightGBMForecaster:
         y_eval = y_true[valid_mask].values
 
         y_pred = booster.predict(X_eval)
-        # 클리핑
-        y_pred = np.clip(y_pred, 0.0, self.rated_capacity_mwh)
+        # Preserve raw predictions; point metrics are clipped centrally.
+        self.last_eval_indices = np.flatnonzero(valid_mask.to_numpy())
 
         metrics = evaluate_wind_forecast(
             y_eval, y_pred, rated_capacity_mwh=self.rated_capacity_mwh

@@ -1,0 +1,26 @@
+# Fixed before this run; prior 2025 development results have been consulted.
+version: crps-multiseed-2026-10-04
+seeds: [42, 2026, 3407]
+horizons: [1, 3, 6, 9, 12, 24]
+selection_metric: crps
+crps_grid_points: 1001
+capacity_mwh: 21.0
+lookback_hours: 24
+torch_threads: 4
+batch_size: 128
+emfn_epochs: 35
+cnn_lstm_epochs: 25
+emfn_lr: 0.001
+cnn_lstm_lr: 0.002
+emfn_patience: 7
+cnn_lstm_patience: 5
+scope: paper_six_models_including_EMFN
+arima: reuse_verified_validation_crps_selected_deterministic_fit
+lightgbm: same_config_as_probabilistic_extension_fit_each_seed_without_new_randomness
+test_role: development_benchmark_previously_consulted
+bootstrap:
+  seed: 1701
+  repetitions: 2000
+  block_hours: [24, 168]
+  statistic: EMFN_minus_comparator_mean_CRPS_and_zero_Brier
+  interpretation: paired_time_block_CI_of_seed_averaged_loss_not_seed_ensemble

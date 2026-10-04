@@ -1,0 +1,19 @@
+model,horizon_hours,n_fits,max_absolute_prediction_difference
+LightGBM (24h matched),1,3,0.0
+Quantile LightGBM (24h matched),1,3,0.0
+Hurdle Quantile LightGBM (24h matched),1,3,0.0
+LightGBM (24h matched),3,3,0.0
+Quantile LightGBM (24h matched),3,3,0.0
+Hurdle Quantile LightGBM (24h matched),3,3,0.0
+LightGBM (24h matched),6,3,0.0
+Quantile LightGBM (24h matched),6,3,0.0
+Hurdle Quantile LightGBM (24h matched),6,3,0.0
+LightGBM (24h matched),9,3,0.0
+Quantile LightGBM (24h matched),9,3,0.0
+Hurdle Quantile LightGBM (24h matched),9,3,0.0
+LightGBM (24h matched),12,3,0.0
+Quantile LightGBM (24h matched),12,3,0.0
+Hurdle Quantile LightGBM (24h matched),12,3,0.0
+LightGBM (24h matched),24,3,0.0
+Quantile LightGBM (24h matched),24,3,0.0
+Hurdle Quantile LightGBM (24h matched),24,3,0.0

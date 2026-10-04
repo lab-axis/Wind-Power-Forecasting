@@ -18,9 +18,11 @@ class NaivePersistence:
         """
         시점 t에서의 값으로 시점 t+h를 예측:
         t 시점의 예측값 = series.shift(0)
-        t+h 시점과 정렬하기 위해 series.shift(horizon)을 반환
+        반환 인덱스는 예측 발행 시점 t; 타깃은 series.shift(-horizon)
         """
-        return series.shift(horizon)
+        if horizon < 1:
+            raise ValueError("horizon must be positive")
+        return series.copy()
 
 
 class DiurnalPersistence:
@@ -33,5 +35,6 @@ class DiurnalPersistence:
         t+h 시점의 예측값을 t+h - 24 시점의 관측값으로 사용:
         예: horizon=1일 때 t+1 시점의 예측값 = t-23 시점 관측치
         """
-        shift_amount = 24
-        return series.shift(shift_amount)
+        if not 1 <= horizon <= self.period:
+            raise ValueError("Origin-indexed diurnal prediction requires 1 <= horizon <= period")
+        return series.shift(self.period - horizon)

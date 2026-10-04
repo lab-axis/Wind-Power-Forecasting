@@ -1,0 +1,16 @@
+{
+  "date": "2026-10-05",
+  "status": "passed",
+  "unit_tests": 33,
+  "prior_csv_and_run_manifest_hashes_unchanged": 31,
+  "paper_main_rows": 24,
+  "paper_supplementary_rows": 18,
+  "views_match_source_exactly": true,
+  "local_markdown_links": "passed",
+  "notebook_02": "all code cells executed",
+  "new_training": false,
+  "source_run_id": "crps_multiseed_20261004T175005+0900",
+  "canonical_figure_manifest_count": 8,
+  "canonical_figure_manifest_excludes_other_runs": true,
+  "multiseed_analysis_hashes_verified_after_figure_regeneration": true
+}

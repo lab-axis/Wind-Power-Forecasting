@@ -1,0 +1,50 @@
+{
+  "run_id": "corrected_v3_20261004T005217+0900",
+  "horizon": 3,
+  "input_unit": "MWh",
+  "weather_scaler": {
+    "mean": {
+      "aws_wind_speed": 4.3020812685827545,
+      "aws_wind_dir_sin": 0.28837208021911703,
+      "aws_wind_dir_cos": 0.05075281068319401,
+      "aws_temperature": 13.379332418838592,
+      "aws_humidity": 78.73478128334095,
+      "aws_local_pressure": 964.9781207133059
+    },
+    "std": {
+      "aws_wind_speed": 2.4162626490483836,
+      "aws_wind_dir_sin": 0.5727404018597991,
+      "aws_wind_dir_cos": 0.7657047954483073,
+      "aws_temperature": 8.07286691117445,
+      "aws_humidity": 17.89320154475994,
+      "aws_local_pressure": 6.305119471443816
+    },
+    "fit_split": "train"
+  },
+  "protocol": {
+    "version": "corrected-v3-2026-10-04",
+    "test_role": "development_benchmark_previously_consulted",
+    "issue_time": "latest_input_hour_end",
+    "observation_latency_hours": 0,
+    "max_ffill_hours": 3,
+    "zero_definition": "exact_observed_zero_mwh",
+    "incomplete_input_windows": "exclude_without_compressing_time",
+    "common_evaluation": "intersection_of_target_timestamps_per_horizon",
+    "crps_grid_points": 1001,
+    "seeds": [
+      42
+    ],
+    "train_epochs_emfn": 35,
+    "train_epochs_baseline": 25,
+    "train_epochs_transformer": 20,
+    "batch_size": 128,
+    "torch_threads": 4,
+    "cudnn_deterministic": false,
+    "cudnn_benchmark": false,
+    "allow_tf32": false,
+    "point_metrics": "clipped_to_physical_bounds",
+    "bounds_metrics": "raw_unclipped_predictions",
+    "probabilistic_comparison": "deterministic_baselines_are_dirac_distributions"
+  },
+  "checkpoint_sha256": "2a7c99ab84b98dfb2fcb40a686788df1c451645fc75269248c166d799dfecead"
+}

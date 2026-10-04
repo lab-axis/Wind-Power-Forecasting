@@ -1,0 +1,5 @@
+# Optional isolated runtime used for the probabilistic extension on Windows.
+# Install into a separate environment or a project-local --target directory.
+numpy==2.2.6
+scipy==1.15.3
+statsmodels==0.14.6

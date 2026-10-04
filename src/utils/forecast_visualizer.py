@@ -219,7 +219,7 @@ def plot_history_to_future_forecast(
     # --- Bottom Panel: Zero Probability across Forecast Horizon ---
     if future_p_zero is not None:
         # Zero history dummy (0 if generation > 0, 1 if == 0)
-        hist_zero = (history_generation < 1e-4).astype(float)
+        hist_zero = (history_generation == 0.0).astype(float)
         ax_bot.plot(hist_t, hist_zero, color="#64748b", lw=1.2, label="Historical Zero State (Binary)")
 
         # Connect at origin

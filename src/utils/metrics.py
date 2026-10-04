@@ -38,6 +38,7 @@
 
 from typing import Dict, Any, Union, Optional, Tuple
 import numpy as np
+import pandas as pd
 from sklearn.metrics import (
     mean_absolute_error,
     mean_squared_error,
@@ -58,6 +59,7 @@ def compute_ramp_metrics(
     y_true: np.ndarray,
     y_pred: np.ndarray,
     eps: float = 1e-6,
+    timestamps=None,
 ) -> Dict[str, float]:
     """
     1-step 램프 변화율(Delta y_t = y_t - y_{t-1})에 대한 추종력 및 분산 보존율 계산.
@@ -79,17 +81,20 @@ def compute_ramp_metrics(
     # 1-step 차분 벡터 (Ramp Vector)
     ramp_true = np.diff(yt)
     ramp_pred = np.diff(yp)
+    if timestamps is not None:
+        adjacent = pd.DatetimeIndex(timestamps).to_series().diff().iloc[1:].eq(pd.Timedelta(hours=1)).to_numpy()
+        ramp_true, ramp_pred = ramp_true[adjacent], ramp_pred[adjacent]
 
-    mae_ramp = float(np.mean(np.abs(ramp_true - ramp_pred)))
-    rmse_ramp = float(np.sqrt(np.mean((ramp_true - ramp_pred) ** 2)))
+    mae_ramp = float(np.mean(np.abs(ramp_true - ramp_pred))) if len(ramp_true) else np.nan
+    rmse_ramp = float(np.sqrt(np.mean((ramp_true - ramp_pred) ** 2))) if len(ramp_true) else np.nan
 
     # 램프 상관계수
-    std_rt = np.std(ramp_true)
-    std_rp = np.std(ramp_pred)
+    std_rt = np.std(ramp_true) if len(ramp_true) else 0.0
+    std_rp = np.std(ramp_pred) if len(ramp_pred) else 0.0
     if std_rt > eps and std_rp > eps:
         corr_ramp = float(np.corrcoef(ramp_true, ramp_pred)[0, 1])
     else:
-        corr_ramp = 0.0
+        corr_ramp = float("nan")
 
     # 분산 보존율 (Variance Preservation Ratio: VPR %)
     std_yt = np.std(yt)
@@ -150,7 +155,7 @@ def compute_physical_boundary_metrics(
 def compute_zero_state_metrics(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    zero_threshold: float = 1e-4,
+    zero_threshold: float = 0.0,
 ) -> Dict[str, float]:
     """
     구조적 영발전(Zero-Inflation, 약 17.5%)에 대한 이진 판별 정확도 평가.
@@ -190,8 +195,8 @@ def compute_cut_in_transition_metrics(
     cut_in_range: Tuple[float, float] = (2.5, 4.5),
 ) -> Dict[str, float]:
     """
-    풍력 터빈이 기동할지 정지할지 가장 불확실성이 높은 시동 풍속 인접 영역(2.5 ~ 4.5 m/s)의
-    국소 예측 오차(MAE, RMSE)를 계산합니다.
+    관측소 실측 풍속 2.5~4.5 m/s 구간의 조건부 오차입니다.
+    실제 터빈의 시동 임계값 또는 가동 상태를 검증하는 지표는 아닙니다.
     """
     yt = np.asarray(y_true, dtype=float).ravel()
     yp = np.asarray(y_pred, dtype=float).ravel()
@@ -250,7 +255,7 @@ def compute_market_imbalance_cost(
 def compute_nonzero_mape(
     y_true: np.ndarray,
     y_pred: np.ndarray,
-    zero_threshold: float = 1e-4,
+    zero_threshold: float = 0.0,
 ) -> float:
     """
     실제 발전량이 존재하는 유효 가동 구간(y_true > zero_threshold)에 한정하여
@@ -291,10 +296,10 @@ def compute_crps_hurdle_beta(
     alpha: np.ndarray,
     beta_param: np.ndarray,
     rated_capacity_mwh: float = 21.0,
-    n_eval_points: int = 101,
+    n_eval_points: int = 1001,
 ) -> float:
     """
-    Bernoulli-Beta Hurdle 모델의 엄밀한 수치 적분 CRPS (Gneiting & Raftery 2007):
+    Bernoulli-Beta Hurdle 모델의 격자 기반 수치 근사 CRPS:
     CRPS(F, y) = integral_0^C (F(z) - I(z >= y))^2 dz
     """
     yt = np.asarray(y_true, dtype=float).ravel()
@@ -305,7 +310,7 @@ def compute_crps_hurdle_beta(
     C = rated_capacity_mwh
     y_norm = np.clip(yt / C, 0.0, 1.0)
 
-    # 101개 등간격 정규화 그리드 [0, 1]
+    # Configurable grid: numerical approximation, not an exact closed-form CRPS.
     grid = np.linspace(0.0, 1.0, n_eval_points)
     z = grid[np.newaxis, :]  # [1, G]
 
@@ -411,6 +416,7 @@ def evaluate_wind_forecast(
     wind_speed: Optional[Union[np.ndarray, list]] = None,
     rated_capacity_mwh: float = 21.0,
     eps: float = 1e-6,
+    timestamps=None,
 ) -> Dict[str, Any]:
     """
     상명풍력 시간별 발전량(MWh) 예측 결과 종합 평가 마스터 함수.
@@ -428,11 +434,16 @@ def evaluate_wind_forecast(
     else:
         raw_pred = y_pred_arr.copy()
 
+    if y_true_arr.shape != y_pred_arr.shape or raw_pred.shape != y_true_arr.shape:
+        raise ValueError("Prediction and target arrays must have identical lengths")
+    if np.isinf(y_pred_arr).any() or np.isinf(raw_pred).any():
+        raise ValueError("Infinite predictions must not be hidden by clipping")
+
     # 공정한 점예측 지표 평가를 위해 물리적 범위 [0, rated_capacity_mwh] 클리핑
     y_pred_clipped = np.clip(y_pred_arr, 0.0, rated_capacity_mwh)
 
     # 유효값 마스킹 (NaN 배제)
-    mask = ~np.isnan(y_true_arr) & ~np.isnan(y_pred_clipped)
+    mask = np.isfinite(y_true_arr) & np.isfinite(y_pred_arr) & np.isfinite(raw_pred)
     yt = y_true_arr[mask]
     yp = y_pred_clipped[mask]
     yraw = raw_pred[mask]
@@ -488,7 +499,8 @@ def evaluate_wind_forecast(
     tic = float(numerator_tic / denominator_tic)
 
     # 7. 동적 램프 및 분산 보존 지표
-    ramp_m = compute_ramp_metrics(yt, yp, eps=eps)
+    ramp_m = compute_ramp_metrics(yt, yp, eps=eps,
+                                  timestamps=None if timestamps is None else np.asarray(timestamps)[mask])
 
     # 8. 물리적 유계 통계 (클리핑 전 원본 기준)
     bound_m = compute_physical_boundary_metrics(yraw, rated_capacity_mwh=rated_capacity_mwh)
@@ -497,10 +509,10 @@ def evaluate_wind_forecast(
     mkt_m = compute_market_imbalance_cost(yt, yp, c_under=1.5, c_over=1.0)
 
     # 10. Non-zero MAPE
-    mape_nz = compute_nonzero_mape(yt, yp, zero_threshold=1e-4)
+    mape_nz = compute_nonzero_mape(yt, yp, zero_threshold=0.0)
 
     # 11. 영발전 F1-score & 균형 정확도
-    zero_m = compute_zero_state_metrics(yt, yp, zero_threshold=1e-4)
+    zero_m = compute_zero_state_metrics(yt, yp, zero_threshold=0.0)
 
     # 기본 결과 딕셔너리 조합
     out: Dict[str, Any] = {
@@ -543,6 +555,7 @@ def evaluate_wind_forecast(
         ci_m = compute_cut_in_transition_metrics(yt, yp, ws_arr)
         out["mae_cut_in"] = ci_m["mae_cut_in"]
         out["rmse_cut_in"] = ci_m["rmse_cut_in"]
+        out["cut_in_count"] = ci_m["cut_in_count"]
 
     return out
 

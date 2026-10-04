@@ -27,6 +27,9 @@ if PROJECT_ROOT not in sys.path:
 
 from src.models.emfn import EMFN, CompositeHurdleLoss
 from src.utils.metrics import evaluate_wind_forecast
+from src.data.forecast_protocol import valid_window_indices
+from src.models.hurdle_beta import compute_ece, evaluate_zero_head
+from src.utils.checkpoint_selection import validation_crps, save_selection_history
 
 
 class EMFNMultiChannelDataset(Dataset):
@@ -45,11 +48,8 @@ class EMFNMultiChannelDataset(Dataset):
         self.horizon = horizon
         self.include_weather = include_weather and (self.data.shape[1] > 1)
 
-        self.valid_indices = []
-        max_idx = len(self.data) - self.horizon
-        for i in range(self.lookback, max_idx + 1):
-            if not np.isnan(self.data[i + self.horizon - 1, 0]):
-                self.valid_indices.append(i)
+        checked = self.data if self.include_weather else self.data[:, :1]
+        self.valid_indices = valid_window_indices(checked, self.lookback, self.horizon)
 
     def __len__(self):
         return len(self.valid_indices)
@@ -57,7 +57,6 @@ class EMFNMultiChannelDataset(Dataset):
     def __getitem__(self, idx):
         t = self.valid_indices[idx]
         x_raw = self.data[t - self.lookback : t, :]
-        x_raw = np.nan_to_num(x_raw, nan=0.0)
 
         x_target = x_raw[:, :1]  # [L, 1] in MWh
         if self.include_weather:
@@ -82,21 +81,8 @@ def compute_expected_calibration_error(
     probs: np.ndarray,
     n_bins: int = 10,
 ) -> float:
-    """Computes Expected Calibration Error (ECE)."""
-    y_true_binary = np.asarray(y_true_binary, dtype=float).ravel()
-    probs = np.asarray(probs, dtype=float).ravel()
-    bin_boundaries = np.linspace(0, 1, n_bins + 1)
-    ece = 0.0
-    for i in range(n_bins):
-        bin_lower = bin_boundaries[i]
-        bin_upper = bin_boundaries[i + 1]
-        in_bin = (probs >= bin_lower) & (probs < bin_upper) if i < n_bins - 1 else (probs >= bin_lower) & (probs <= bin_upper)
-        prop_in_bin = np.mean(in_bin)
-        if prop_in_bin > 0:
-            accuracy_in_bin = np.mean(y_true_binary[in_bin])
-            avg_confidence_in_bin = np.mean(probs[in_bin])
-            ece += np.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
-    return float(ece)
+    """Compatibility wrapper with argument validation in the canonical ECE function."""
+    return compute_ece(y_true_binary, probs, n_bins)
 
 
 def train_and_evaluate_emfn(
@@ -120,16 +106,23 @@ def train_and_evaluate_emfn(
     regression_mode: bool = False,
     model_name: Optional[str] = None,
     save_model_path: Optional[str] = None,
+    selection_metric: str = "crps",
+    crps_grid_points: int = 1001,
 ) -> Tuple[Dict[str, Any], np.ndarray, Dict[str, Any]]:
     """
     Trains EMFN and evaluates on 2025 Test Set.
     Supports comprehensive ablation matrix configurations.
     """
     n_weather = train_data.shape[1] - 1 if include_weather else 0
+    if selection_metric not in ("crps", "loss"):
+        raise ValueError("selection_metric must be crps or loss")
 
     train_ds = EMFNMultiChannelDataset(train_data, lookback_steps, horizon, include_weather)
     val_ds = EMFNMultiChannelDataset(val_data, lookback_steps, horizon, include_weather)
     test_ds = EMFNMultiChannelDataset(test_data, lookback_steps, horizon, include_weather)
+
+    if any(len(ds) == 0 for ds in (train_ds, val_ds, test_ds)):
+        raise ValueError("No finite windows in one or more splits")
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
@@ -160,6 +153,8 @@ def train_and_evaluate_emfn(
     )
 
     best_val_loss = float("inf")
+    best_selection = float("inf")
+    history = []
     best_weights = None
     patience_cnt = 0
     t0 = time.time()
@@ -188,6 +183,7 @@ def train_and_evaluate_emfn(
         # Validation
         model.eval()
         val_loss = 0.0
+        val_predictions, val_p, val_a, val_b = [], [], [], []
         with torch.no_grad():
             for bx_target, bx_weather, by in val_loader:
                 bx_target, by = bx_target.to(device), by.to(device)
@@ -195,15 +191,32 @@ def train_and_evaluate_emfn(
                 if regression_mode:
                     y_pred_mwh, _, _ = model(bx_target, bx_weather)
                     loss = criterion_reg(y_pred_mwh / capacity_mwh, by / capacity_mwh)
+                    val_predictions.append(y_pred_mwh.cpu().numpy().ravel())
                 else:
                     z_zero, z_alpha, z_beta = model(bx_target, bx_weather)
                     loss, _, _ = criterion(z_zero, z_alpha, z_beta, by)
-                val_loss += loss.item()
+                    p=torch.sigmoid(z_zero)
+                    a=torch.nn.functional.softplus(z_alpha)+1e-4
+                    b=torch.nn.functional.softplus(z_beta)+1e-4
+                    val_predictions.append((capacity_mwh*p*a/(a+b)).cpu().numpy().ravel())
+                    val_p.append(p.cpu().numpy().ravel())
+                    val_a.append(a.cpu().numpy().ravel())
+                    val_b.append(b.cpu().numpy().ravel())
+                val_loss += loss.item() * len(by)
 
-        val_loss /= max(len(val_loader), 1)
-        scheduler.step(val_loss)
+        val_loss /= len(val_ds)
+        val_targets=np.asarray(val_data)[np.asarray(val_ds.valid_indices)+horizon-1,0]
+        params={} if regression_mode else dict(p_pos=np.concatenate(val_p),alpha=np.concatenate(val_a),beta=np.concatenate(val_b))
+        val_crps=validation_crps(val_targets,np.concatenate(val_predictions),capacity_mwh,crps_grid_points,**params)
+        selection=val_crps if selection_metric=="crps" else val_loss
+        if not np.isfinite(selection): raise RuntimeError("Nonfinite validation selection score")
+        scheduler.step(selection)
+        history.append(dict(epoch=epoch+1,val_loss=val_loss,val_crps=val_crps,selection_score=selection))
 
-        if val_loss < best_val_loss:
+        if selection < best_selection:
+            best_selection=selection
+            best_val_crps=val_crps
+            best_epoch = epoch + 1
             best_val_loss = val_loss
             best_weights = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             patience_cnt = 0
@@ -214,12 +227,15 @@ def train_and_evaluate_emfn(
 
     train_time = time.time() - t0
 
+    if best_weights is None:
+        raise RuntimeError("No finite validation checkpoint; training failed")
     if best_weights is not None:
         model.load_state_dict({k: v.to(device) for k, v in best_weights.items()})
 
     if save_model_path is not None:
         os.makedirs(os.path.dirname(save_model_path), exist_ok=True)
         torch.save(model.state_dict(), save_model_path)
+        save_selection_history(save_model_path,history,selection_metric)
 
     # Test Evaluation
     model.eval()
@@ -227,6 +243,7 @@ def train_and_evaluate_emfn(
     all_y_mean = []
     all_y_median = []
     all_p_pos = []
+    all_alpha, all_beta = [], []
 
     with torch.no_grad():
         for bx_target, bx_weather, by in test_loader:
@@ -238,6 +255,8 @@ def train_and_evaluate_emfn(
             all_y_mean.append(preds["y_mean_rmse"].flatten())
             all_y_median.append(preds["y_median_mae"].flatten())
             all_p_pos.append(preds["p_positive"].flatten())
+            all_alpha.append(preds["alpha"].flatten())
+            all_beta.append(preds["beta"].flatten())
 
     y_true = np.concatenate(all_y_true)
     y_mean = np.concatenate(all_y_mean)
@@ -257,13 +276,11 @@ def train_and_evaluate_emfn(
         zero_brier = np.nan
         zero_ece = np.nan
     else:
-        is_positive_true = (y_true > 1e-4).astype(int)
-        zero_auroc = float(roc_auc_score(is_positive_true, p_pos))
-        is_zero_true = 1 - is_positive_true
-        p_zero = 1.0 - p_pos
-        zero_auprc = float(average_precision_score(is_zero_true, p_zero))
-        zero_brier = float(brier_score_loss(is_zero_true, p_zero))
-        zero_ece = compute_expected_calibration_error(is_zero_true, p_zero)
+        zero = evaluate_zero_head(y_true, p_pos)
+        zero_auroc = zero["auroc"]
+        zero_auprc = zero["auprc_zero"]
+        zero_brier = zero["brier_score_zero"]
+        zero_ece = zero["ece_zero"]
 
     # 4. Physical Bounds Violation Check
     neg_viol_count = int(np.sum(y_mean < 0.0))
@@ -313,9 +330,20 @@ def train_and_evaluate_emfn(
         "max_pred_mwh": max_pred_val,
         "train_time_sec": train_time,
         "stopped_epoch": epoch + 1,
+        "best_epoch": best_epoch,
+        "best_val_loss": best_val_loss,
+        "selection_metric": selection_metric,
+        "best_val_crps": best_val_crps,
+        "best_selection_score": best_selection,
+        "train_count": len(train_ds),
+        "val_count": len(val_ds),
+        "test_count": len(test_ds),
     }
 
     preds_dict = {
+        "input_indices": np.asarray(test_ds.valid_indices),
+        "alpha": np.concatenate(all_alpha),
+        "beta": np.concatenate(all_beta),
         "y_true": y_true,
         "y_mean": y_mean,
         "y_median": y_median,

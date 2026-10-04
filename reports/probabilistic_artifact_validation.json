@@ -1,0 +1,11 @@
+{
+  "status": "passed",
+  "run_id": "probabilistic_extension_20261004T121114+0900",
+  "benchmark_rows": 84,
+  "new_model_horizon_reloads": 24,
+  "validation_selection": "all selected values minimize candidate validation CRPS",
+  "parent_common_samples_preserved": true,
+  "raw_and_checkpoint_hashes": "verified",
+  "primary_metrics_recomputed": "verified",
+  "max_sampled_grid_refinement_difference": 0.00039728084591339474
+}

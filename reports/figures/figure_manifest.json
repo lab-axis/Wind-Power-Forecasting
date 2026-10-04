@@ -1,0 +1,17 @@
+{
+  "run_id": "corrected_v3_20261004T005217+0900",
+  "fixed_sample_window": [
+    "2025-01-10",
+    "2025-01-17 exclusive"
+  ],
+  "figures": [
+    "emfn_ablation_comparison.png",
+    "emfn_test_forecast_+12h.png",
+    "emfn_test_forecast_+1h.png",
+    "emfn_test_forecast_+24h.png",
+    "emfn_test_forecast_+3h.png",
+    "generation_eda_overview.png",
+    "multi_horizon_performance_decay_curve.png",
+    "raw_boundary_violations.png"
+  ]
+}

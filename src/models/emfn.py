@@ -13,16 +13,15 @@ Architecture Highlights:
      * Directly outputs Beta shape parameters (alpha, beta) for positive generation volume.
    - Route B (Zero-State Branch):
      * Dedicated projection from shared spatio-temporal features.
-     * Domain-specific Selective Weather Gating: extracts cut-in wind speed proximity (v_t, v_mean, v_max)
-       and historical zero streak dynamics.
+     * Selective Weather Gating: transforms observed wind summaries, pressure,
+       temperature and historical zero frequencies; no turbine threshold is imposed.
      * Directly outputs Bernoulli logit z_zero for P(Y > 0 | X).
-3. Eliminates Negative Transfer:
-   - Prevents weather representations beneficial for magnitude prediction from perturbing
-     the discrete boundary calibration of the zero classifier.
+3. Separate task adapters on a shared backbone:
+   - Their predictive contribution must be measured by ablation; no causal effect is identified.
 4. Composite Supervised Hurdle Objective:
-   - Joint calibration of Hurdle NLL (probabilistic bounds) and weighted Huber point loss (direct MAE minimization).
+   - Joint Hurdle NLL on normalized energy and weighted Huber point loss.
 5. Native Physical Boundary Guarantee:
-   - Mathematical outputs strictly confined to [0, 21.0 MWh] with 0.00% bound violations.
+   - Outputs lie in [0, capacity_mwh] by construction.
 """
 
 from typing import Tuple, Dict, Any, Optional
@@ -290,11 +289,8 @@ class EMFN(nn.Module):
         """
         B, L, _ = x_target.shape
 
-        # Normalize target generation into [0, 1] for network processing
-        if x_target.max() > 1.5:
-            x_target_norm = x_target / self.capacity_mwh
-        else:
-            x_target_norm = x_target
+        # Public input contract: generation is always in MWh, independent of batch contents.
+        x_target_norm = x_target / self.capacity_mwh
 
         # -------------------------------------------------------------
         # 1. Multi-channel Spatiotemporal Encoding
@@ -350,7 +346,7 @@ class EMFN(nn.Module):
             ws_mean6 = ws[:, -w_6h:, :].mean(dim=1)               # [B, 1]
             ws_max6 = ws[:, -w_6h:, :].max(dim=1).values          # [B, 1]
 
-            is_zero_seq = (x_target_norm < 1e-4).float()
+            is_zero_seq = (x_target == 0.0).float()
             is_zero_last = is_zero_seq[:, -1, :]                  # [B, 1]
             zero_freq6 = is_zero_seq[:, -w_6h:, :].mean(dim=1)    # [B, 1]
             zero_freq24 = is_zero_seq.mean(dim=1)                 # [B, 1]

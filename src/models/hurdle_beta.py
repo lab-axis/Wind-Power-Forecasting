@@ -169,6 +169,16 @@ def compute_ece(
     """
     Computes Expected Calibration Error (ECE) for binary probabilistic predictions.
     """
+    y_true_binary = np.asarray(y_true_binary, dtype=float).ravel()
+    probs = np.asarray(probs, dtype=float).ravel()
+    if y_true_binary.shape != probs.shape or n_bins < 1:
+        raise ValueError("ECE labels/probabilities must have equal lengths and n_bins >= 1")
+    if not np.isin(y_true_binary, [0, 1]).all():
+        raise ValueError("ECE first argument must contain binary labels")
+    if not np.isfinite(probs).all() or ((probs < 0) | (probs > 1)).any():
+        raise ValueError("ECE probabilities must be finite and in [0, 1]")
+    if len(probs) == 0:
+        return float("nan")
     bin_boundaries = np.linspace(0, 1, n_bins + 1)
     ece = 0.0
     n = len(y_true_binary)
@@ -207,14 +217,17 @@ def evaluate_zero_head(
         - brier_score: Brier Score for probability calibration
         - ece_zero: Expected Calibration Error for zero probability
     """
+    y_true = np.asarray(y_true).ravel()
+    p_pos = np.asarray(p_pos).ravel()
     true_positive = (y_true > 0).astype(int)
     true_zero = (y_true == 0).astype(int)
     p_pos = np.clip(p_pos, 1e-7, 1.0 - 1e-7)
     p_zero = 1.0 - p_pos
 
-    auroc = roc_auc_score(true_positive, p_pos)
-    auprc_pos = average_precision_score(true_positive, p_pos)
-    auprc_zero = average_precision_score(true_zero, p_zero)
+    both_classes = len(np.unique(true_zero)) == 2
+    auroc = roc_auc_score(true_positive, p_pos) if both_classes else np.nan
+    auprc_pos = average_precision_score(true_positive, p_pos) if both_classes else np.nan
+    auprc_zero = average_precision_score(true_zero, p_zero) if both_classes else np.nan
 
     pred_zero = (p_zero >= (1.0 - threshold)).astype(int)
     f1_z = f1_score(true_zero, pred_zero, zero_division=0)

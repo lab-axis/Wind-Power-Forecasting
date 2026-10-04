@@ -1,0 +1,20 @@
+# Presentation only: never changes completed experiment settings or selects seeds.
+updated: '2026-10-05'
+status: working_layout_not_final_submission_roster
+primary_metric: crps
+key_secondary_metric: zero_brier
+metrics: [crps, zero_brier, rmse, mae, zero_auprc]
+max_comparators_excluding_emfn: 5
+main_models:
+  - EMFN (Proposed)
+  - ARIMA
+  - CNN-LSTM (+Weather)
+  - LightGBM (24h matched)
+supplementary_probability_models:
+  - EMFN (Proposed)
+  - Quantile LightGBM (24h matched)
+  - Hurdle Quantile LightGBM (24h matched)
+candidate_not_yet_in_current_view: Naive Persistence
+source_manifest: reports/multiseed_crps_manifest.json
+source_summary: reports/tables/multiseed_crps_summary.csv
+retain_all_results: true

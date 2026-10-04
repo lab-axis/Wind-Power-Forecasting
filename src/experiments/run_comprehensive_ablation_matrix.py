@@ -1,277 +1,78 @@
-"""
-Comprehensive 4-Axis Ablation Matrix Experiment Script for EMFN
-- Evaluates on 2025 Test Set (8,760 hours, 100% complete, 0% missing)
-- Horizons: +1h Ahead and +3h Ahead
-- Ablation Axes:
-  1. Full EMFN (+Weather, Proposed) [Proposed Baseline]
-  2. EMFN (Endogenous Only) [Axis 1: Meteorological Conditioning]
-  3. EMFN (w/o HF Skips) [Axis 2: High-Frequency Momentum Skips & AR Shortcut]
-  4. EMFN (w/o Selective Gate) [Axis 3: Domain-Specific Weather Gating for Zero Head]
-  5. EMFN (Deterministic Huber Regressor) [Axis 4: Physical Hurdle Head vs Unconstrained Regression]
-- Outputs:
-  - reports/tables/emfn_comprehensive_ablation_matrix.csv
-  - reports/figures/emfn_ablation_comparison.png
-"""
-
-import os
-import sys
-import time
-import numpy as np
+"""Existing architecture ablations on the corrected protocol (not a pure head study)."""
+import argparse
+import json
+from datetime import datetime, timezone
 import pandas as pd
 import torch
-import matplotlib.pyplot as plt
-
-PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-if PROJECT_ROOT not in sys.path:
-    sys.path.insert(0, PROJECT_ROOT)
-
+from src.data.forecast_protocol import ROOT, load_config, prepare_splits, prediction_frame, align_predictions
 from src.models.emfn_trainer import train_and_evaluate_emfn
-
-torch.manual_seed(42)
-np.random.seed(42)
-if torch.cuda.is_available():
-    torch.cuda.manual_seed_all(42)
+from src.experiments.run_comprehensive_extended_matrix import seed_everything, slug, sha256, add_observations, score_predictions
 
 
-def main():
-    print("=" * 85)
-    print("   EMFN Comprehensive 4-Axis Ablation Matrix Experiment (2025 Test Set)   ")
-    print("=" * 85)
+def main(run_dir):
+    run_dir = ROOT / run_dir
+    parent = json.loads((run_dir/'manifest.json').read_text(encoding='utf-8'))
+    if parent['status'] != 'complete': raise ValueError('Complete the main benchmark first')
+    if sha256(ROOT/'data/processed/merged_dataset.parquet') != parent['processed_data_sha256']:
+        raise ValueError('Processed data differ from main benchmark')
+    config = load_config()
+    if config['protocol'] != parent['protocol']: raise ValueError('Protocol differs from main benchmark')
+    cfg = config['protocol']
+    raw, arrays, scaler = prepare_splits(pd.read_parquet(ROOT/'data/processed/merged_dataset.parquet'),config)
+    out = run_dir/'ablation'
+    out.mkdir(exist_ok=False)
+    torch.set_num_threads(cfg['torch_threads'])
+    capacity=config['plant_specs']['max_hourly_mwh']; L=config['modeling']['lookback_hours']
+    variants = {
+        'EMFN (Endogenous Only)':dict(include_weather=False),
+        'EMFN (w/o HF Skips)':dict(use_hf_skips=False),
+        'EMFN (w/o Selective Gate)':dict(use_selective_gate=False),
+        'EMFN (Deterministic Regression)':dict(regression_mode=True),
+    }
+    manifest=dict(parent_run_id=parent['run_id'],status='running',protocol=cfg,
+        processed_data_sha256=parent['processed_data_sha256'],weather_scaler=scaler,
+        interpretation='Architecture plus objective ablations; regression also removes zero route and gate.',
+        experiments=[],source_hashes={})
+    for p in sorted((ROOT/'src').rglob('*.py')):
+        manifest['source_hashes'][p.relative_to(ROOT).as_posix()] = sha256(p)
+    import zipfile
+    with zipfile.ZipFile(out/'source.zip','w',zipfile.ZIP_DEFLATED) as z:
+        for rel in manifest['source_hashes']: z.write(ROOT/rel,rel)
+    rows=[]
+    def save(): (out/'manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+    save()
+    for h in [1,3]:
+        frames={'EMFN (Proposed)':pd.read_parquet(run_dir/f'emfn__proposed_{h}h_common.parquet')}
+        for name,options in variants.items():
+            seed_everything(cfg['seeds'][0])
+            ckpt=out/f'{slug(name)}_{h}h.pt'
+            info,_,p=train_and_evaluate_emfn(arrays['train'],arrays['validation'],arrays['test'],
+                lookback_steps=L,horizon=h,epochs=cfg['train_epochs_emfn'],batch_size=cfg['batch_size'],
+                # Preserve the historical parent model's validation-loss selection.
+                capacity_mwh=capacity,device=parent['device'],save_model_path=str(ckpt),selection_metric='loss',**options)
+            extra={} if options.get('regression_mode') else dict(y_median=p['y_median'],p_pos=p['p_pos'],alpha=p['alpha'],beta=p['beta'])
+            f=prediction_frame(raw['test'],p['input_indices'],h,p['y_true'],p['y_mean'],**extra)
+            f=add_observations(f,raw['test'],capacity)
+            predfile=out/f'{slug(name)}_{h}h_predictions.parquet'
+            f.to_parquet(predfile,index=False);frames[name]=f
+            manifest['experiments'].append(dict(model=name,horizon=h,options=options,
+                checkpoint=ckpt.name,checkpoint_sha256=sha256(ckpt),prediction_file=predfile.name,
+                prediction_sha256=sha256(predfile),training=info))
+            save()
+            print(f'ABLATION +{h}h {name}: epoch {info["best_epoch"]}, {info["train_time_sec"]:.1f}s',flush=True)
+        aligned=align_predictions(frames)
+        for name,f in aligned.items():
+            f.to_parquet(out/f'{slug(name)}_{h}h_common.parquet',index=False)
+            scores=score_predictions(f,capacity,cfg['crps_grid_points'])
+            scores.update(model=name,horizon=f'+{h}h',horizon_hours=h,seed=cfg['seeds'][0],
+                run_id=parent['run_id'],zero_prevalence=float(f.y_true.eq(0).mean()))
+            rows.append(scores)
+        pd.DataFrame(rows).to_csv(out/'ablation.csv',index=False)
+    manifest.update(status='complete',completed_at=datetime.now(timezone.utc).isoformat())
+    save()
+    pd.DataFrame(rows).to_csv(ROOT/'reports/tables/emfn_comprehensive_ablation_matrix.csv',index=False)
+    (ROOT/'reports/corrected_ablation_manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
+    print('ABLATION COMPLETE',flush=True)
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    print(f"[*] Compute Device: {device} ({torch.cuda.get_device_name(0) if device == 'cuda' else 'CPU'})")
-
-    # 1. Load Data
-    data_path = "data/processed/merged_dataset.parquet"
-    if not os.path.exists(data_path):
-        raise FileNotFoundError(f"Master merged dataset not found at {data_path}.")
-
-    df = pd.read_parquet(data_path)
-    df["datetime"] = pd.to_datetime(df["datetime"])
-    df.sort_values("datetime", inplace=True)
-    df.reset_index(drop=True, inplace=True)
-
-    weather_cols = [
-        "aws_wind_speed",
-        "aws_wind_dir_sin",
-        "aws_wind_dir_cos",
-        "aws_temperature",
-        "aws_humidity",
-        "aws_local_pressure",
-    ]
-    target_col = "generation_mwh"
-    all_cols = [target_col] + weather_cols
-
-    # 2. Strict Dataset Split Protocol (2025 8,760h Test Set Only, 2026 Excluded)
-    train_mask = (df["datetime"] >= "2023-01-01 01:00:00") & (df["datetime"] <= "2024-06-30 23:00:00")
-    val_mask = (df["datetime"] >= "2024-07-01 00:00:00") & (df["datetime"] <= "2024-12-31 23:00:00")
-    test_mask = (df["datetime"] >= "2025-01-01 00:00:00") & (df["datetime"] <= "2025-12-31 23:00:00")
-
-    df_train = df[train_mask].copy().reset_index(drop=True)
-    df_val = df[val_mask].copy().reset_index(drop=True)
-    df_test = df[test_mask].copy().reset_index(drop=True)
-
-    print(f"[*] Dataset Splits:")
-    print(f"    - Train: {len(df_train):,} hours (2023-01-01 ~ 2024-06-30)")
-    print(f"    - Val:   {len(df_val):,} hours (2024-07-01 ~ 2024-12-31)")
-    print(f"    - Test:  {len(df_test):,} hours (2025-01-01 ~ 2025-12-31, Missing: 0.00%)")
-
-    # 3. Standardize Weather based on Train Set
-    w_mean = df_train[weather_cols].mean()
-    w_std = df_train[weather_cols].std().replace(0, 1.0)
-
-    for col in weather_cols:
-        df_train[col] = (df_train[col] - w_mean[col]) / w_std[col]
-        df_val[col] = (df_val[col] - w_mean[col]) / w_std[col]
-        df_test[col] = (df_test[col] - w_mean[col]) / w_std[col]
-
-    train_data = df_train[all_cols].values
-    val_data = df_val[all_cols].values
-    test_data = df_test[all_cols].values
-
-    horizons = [1, 3]
-
-    # Ablation configurations
-    configs = [
-        {
-            "name": "Full EMFN (+Weather, Proposed)",
-            "include_weather": True,
-            "use_hf_skips": True,
-            "use_selective_gate": True,
-            "regression_mode": False,
-            "description": "Full Task-Decoupled Dual-Route Hurdle Network",
-        },
-        {
-            "name": "EMFN (Endogenous Only)",
-            "include_weather": False,
-            "use_hf_skips": True,
-            "use_selective_gate": True,
-            "regression_mode": False,
-            "description": "Ablation: Exclude AWS meteorological features",
-        },
-        {
-            "name": "EMFN (w/o HF Skips)",
-            "include_weather": True,
-            "use_hf_skips": False,
-            "use_selective_gate": True,
-            "regression_mode": False,
-            "description": "Ablation: Exclude high-frequency momentum skips & AR shortcut",
-        },
-        {
-            "name": "EMFN (w/o Selective Gate)",
-            "include_weather": True,
-            "use_hf_skips": True,
-            "use_selective_gate": False,
-            "regression_mode": False,
-            "description": "Ablation: Exclude domain-specific cut-in gating for zero head",
-        },
-        {
-            "name": "EMFN (Deterministic Regression)",
-            "include_weather": True,
-            "use_hf_skips": True,
-            "use_selective_gate": True,
-            "regression_mode": True,
-            "description": "Ablation: Unconstrained Linear + Huber loss (No Hurdle)",
-        },
-    ]
-
-    all_results = []
-    saved_preds = {}
-
-    for cfg in configs:
-        c_name = cfg["name"]
-        incl_w = cfg["include_weather"]
-        hf_skips = cfg["use_hf_skips"]
-        sel_gate = cfg["use_selective_gate"]
-        reg_mode = cfg["regression_mode"]
-
-        print(f"\n=======================================================")
-        print(f"[*] Running Configuration: {c_name}")
-        print(f"    - Weather: {incl_w} | HF Skips: {hf_skips} | Selective Gate: {sel_gate} | Reg Mode: {reg_mode}")
-        print(f"=======================================================")
-
-        for h in horizons:
-            print(f"  --> Training for Horizon +{h}h Ahead...")
-            summary, y_mean, preds_dict = train_and_evaluate_emfn(
-                train_data=train_data,
-                val_data=val_data,
-                test_data=test_data,
-                lookback_steps=24,
-                horizon=h,
-                include_weather=incl_w,
-                d_model=64,
-                dilations=(1, 2, 4, 8),
-                lambda_point=2.0,
-                lr=1e-3,
-                batch_size=128,
-                epochs=35,
-                patience=7,
-                capacity_mwh=21.0,
-                device=device,
-                use_hf_skips=hf_skips,
-                use_selective_gate=sel_gate,
-                regression_mode=reg_mode,
-                model_name=c_name,
-            )
-
-            print(
-                f"      [+{h}h] Canonical MAE: {summary['mae_canonical']:.4f} MWh ({summary['nmae_canonical_pct']:.2f}%) | "
-                f"RMSE: {summary['rmse_canonical']:.4f} MWh | R^2: {summary['r2_canonical']:.4f} | "
-                f"Zero AUROC: {summary['zero_auroc'] if not np.isnan(summary['zero_auroc']) else 'N/A'} | "
-                f"Zero AUPRC: {summary['zero_auprc'] if not np.isnan(summary['zero_auprc']) else 'N/A'} | "
-                f"Bound Viol: {summary['bound_violation_pct']:.2f}% (min {summary['min_pred_mwh']:.3f})"
-            )
-
-            all_results.append(summary)
-            saved_preds[(c_name, h)] = preds_dict
-
-    # Save to DataFrame
-    df_results = pd.DataFrame(all_results)
-    out_table_path = "reports/tables/emfn_comprehensive_ablation_matrix.csv"
-    os.makedirs(os.path.dirname(out_table_path), exist_ok=True)
-    df_results.to_csv(out_table_path, index=False, encoding="utf-8-sig")
-    print(f"\n[+] Saved Comprehensive Ablation Matrix Table to: {out_table_path}")
-
-    # Generate Comparative Visualization
-    plot_ablation_results(df_results, out_fig_path="reports/figures/emfn_ablation_comparison.png")
-
-    print("\n=== Comprehensive Ablation Matrix Run Completed Successfully! ===")
-
-
-def plot_ablation_results(df_res: pd.DataFrame, out_fig_path: str):
-    """
-    Plots MAE, R^2, Zero AUPRC, and Physical Violations across ablation models.
-    """
-    os.makedirs(os.path.dirname(out_fig_path), exist_ok=True)
-
-    fig, axes = plt.subplots(2, 2, figsize=(14, 10))
-
-    df_1h = df_res[df_res["horizon"] == "+1h"].copy()
-    df_3h = df_res[df_res["horizon"] == "+3h"].copy()
-
-    model_names_short = [
-        "Full EMFN",
-        "w/o Weather",
-        "w/o HF Skips",
-        "w/o Gate",
-        "Regression",
-    ]
-
-    x = np.arange(len(model_names_short))
-    width = 0.35
-
-    # 1. MAE Comparison
-    ax1 = axes[0, 0]
-    ax1.bar(x - width/2, df_1h["mae_canonical"], width, label="+1h Ahead", color="#1f77b4", alpha=0.85)
-    ax1.bar(x + width/2, df_3h["mae_canonical"], width, label="+3h Ahead", color="#ff7f0e", alpha=0.85)
-    ax1.set_title("Canonical MAE (MWh, Lower is Better)", fontsize=11, fontweight="bold")
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(model_names_short, rotation=15, ha="right", fontsize=9)
-    ax1.grid(True, linestyle="--", alpha=0.4, axis="y")
-    ax1.legend()
-
-    # 2. R^2 Comparison
-    ax2 = axes[0, 1]
-    ax2.bar(x - width/2, df_1h["r2_canonical"], width, label="+1h Ahead", color="#2ca02c", alpha=0.85)
-    ax2.bar(x + width/2, df_3h["r2_canonical"], width, label="+3h Ahead", color="#d62728", alpha=0.85)
-    ax2.set_title("Coefficient of Determination R^2 (Higher is Better)", fontsize=11, fontweight="bold")
-    ax2.set_xticks(x)
-    ax2.set_xticklabels(model_names_short, rotation=15, ha="right", fontsize=9)
-    ax2.grid(True, linestyle="--", alpha=0.4, axis="y")
-    ax2.legend()
-
-    # 3. Zero AUPRC (Detection Precision)
-    ax3 = axes[1, 0]
-    # Replace NaN with 0 for regression
-    auprc_1h = df_1h["zero_auprc"].fillna(0.0)
-    auprc_3h = df_3h["zero_auprc"].fillna(0.0)
-    ax3.bar(x - width/2, auprc_1h, width, label="+1h Ahead", color="#9467bd", alpha=0.85)
-    ax3.bar(x + width/2, auprc_3h, width, label="+3h Ahead", color="#8c564b", alpha=0.85)
-    ax3.axhline(0.175, color="red", linestyle=":", label="Random Baseline (17.5%)")
-    ax3.set_title("Zero AUPRC (Zero-State Precision, Higher is Better)", fontsize=11, fontweight="bold")
-    ax3.set_xticks(x)
-    ax3.set_xticklabels(model_names_short, rotation=15, ha="right", fontsize=9)
-    ax3.grid(True, linestyle="--", alpha=0.4, axis="y")
-    ax3.legend()
-
-    # 4. Bound Violation Rate (%)
-    ax4 = axes[1, 1]
-    viol_1h = df_1h["bound_violation_pct"]
-    viol_3h = df_3h["bound_violation_pct"]
-    ax4.bar(x - width/2, viol_1h, width, label="+1h Ahead", color="#e377c2", alpha=0.85)
-    ax4.bar(x + width/2, viol_3h, width, label="+3h Ahead", color="#7f7f7f", alpha=0.85)
-    ax4.set_title("Physical Bound Violation Rate (%, Strictly 0% Target)", fontsize=11, fontweight="bold")
-    ax4.set_xticks(x)
-    ax4.set_xticklabels(model_names_short, rotation=15, ha="right", fontsize=9)
-    ax4.grid(True, linestyle="--", alpha=0.4, axis="y")
-    ax4.legend()
-
-    plt.suptitle("EMFN Comprehensive 4-Axis Ablation Study (2025 Test: 8,760h)", fontsize=13, fontweight="bold")
-    plt.tight_layout()
-    plt.savefig(out_fig_path, dpi=300, bbox_inches="tight")
-    plt.close()
-    print(f"[+] Saved Ablation Comparison Figure to: {out_fig_path}")
-
-
-if __name__ == "__main__":
-    main()
+if __name__=='__main__':
+    p=argparse.ArgumentParser();p.add_argument('run_dir');main(p.parse_args().run_dir)

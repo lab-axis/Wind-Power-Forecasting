@@ -1,0 +1,61 @@
+model,horizon_hours,total_test_hours,available_count,common_count,excluded_from_common
+EMFN (Proposed),1,8760,8736,8736,24
+DLinear (+Weather),1,8760,8736,8736,24
+LSTM (+Weather),1,8760,8736,8736,24
+GRU (+Weather),1,8760,8736,8736,24
+CNN-LSTM (+Weather),1,8760,8736,8736,24
+TCN (+Weather),1,8760,8736,8736,24
+Transformer (+Weather),1,8760,8736,8736,24
+LightGBM (+Weather),1,8760,8759,8736,24
+Naive Persistence,1,8760,8759,8736,24
+24h Diurnal Persistence,1,8760,8736,8736,24
+EMFN (Proposed),3,8760,8734,8734,26
+DLinear (+Weather),3,8760,8734,8734,26
+LSTM (+Weather),3,8760,8734,8734,26
+GRU (+Weather),3,8760,8734,8734,26
+CNN-LSTM (+Weather),3,8760,8734,8734,26
+TCN (+Weather),3,8760,8734,8734,26
+Transformer (+Weather),3,8760,8734,8734,26
+LightGBM (+Weather),3,8760,8757,8734,26
+Naive Persistence,3,8760,8757,8734,26
+24h Diurnal Persistence,3,8760,8736,8734,26
+EMFN (Proposed),6,8760,8731,8731,29
+DLinear (+Weather),6,8760,8731,8731,29
+LSTM (+Weather),6,8760,8731,8731,29
+GRU (+Weather),6,8760,8731,8731,29
+CNN-LSTM (+Weather),6,8760,8731,8731,29
+TCN (+Weather),6,8760,8731,8731,29
+Transformer (+Weather),6,8760,8731,8731,29
+LightGBM (+Weather),6,8760,8754,8731,29
+Naive Persistence,6,8760,8754,8731,29
+24h Diurnal Persistence,6,8760,8736,8731,29
+EMFN (Proposed),9,8760,8728,8728,32
+DLinear (+Weather),9,8760,8728,8728,32
+LSTM (+Weather),9,8760,8728,8728,32
+GRU (+Weather),9,8760,8728,8728,32
+CNN-LSTM (+Weather),9,8760,8728,8728,32
+TCN (+Weather),9,8760,8728,8728,32
+Transformer (+Weather),9,8760,8728,8728,32
+LightGBM (+Weather),9,8760,8751,8728,32
+Naive Persistence,9,8760,8751,8728,32
+24h Diurnal Persistence,9,8760,8736,8728,32
+EMFN (Proposed),12,8760,8725,8725,35
+DLinear (+Weather),12,8760,8725,8725,35
+LSTM (+Weather),12,8760,8725,8725,35
+GRU (+Weather),12,8760,8725,8725,35
+CNN-LSTM (+Weather),12,8760,8725,8725,35
+TCN (+Weather),12,8760,8725,8725,35
+Transformer (+Weather),12,8760,8725,8725,35
+LightGBM (+Weather),12,8760,8748,8725,35
+Naive Persistence,12,8760,8748,8725,35
+24h Diurnal Persistence,12,8760,8736,8725,35
+EMFN (Proposed),24,8760,8713,8713,47
+DLinear (+Weather),24,8760,8713,8713,47
+LSTM (+Weather),24,8760,8713,8713,47
+GRU (+Weather),24,8760,8713,8713,47
+CNN-LSTM (+Weather),24,8760,8713,8713,47
+TCN (+Weather),24,8760,8713,8713,47
+Transformer (+Weather),24,8760,8713,8713,47
+LightGBM (+Weather),24,8760,8736,8713,47
+Naive Persistence,24,8760,8736,8713,47
+24h Diurnal Persistence,24,8760,8736,8713,47

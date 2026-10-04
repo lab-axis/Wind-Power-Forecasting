@@ -12,6 +12,8 @@ import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader
 from typing import Tuple, Dict, Any, Optional
 from src.utils.metrics import evaluate_wind_forecast
+from src.data.forecast_protocol import valid_window_indices
+from src.utils.checkpoint_selection import validation_crps, save_selection_history
 
 
 class WindTimeSeriesDataset(Dataset):
@@ -34,11 +36,7 @@ class WindTimeSeriesDataset(Dataset):
         self.lookback = lookback_steps
         self.horizon = horizon
 
-        self.valid_indices = []
-        max_idx = len(self.data) - self.horizon
-        for i in range(self.lookback, max_idx + 1):
-            if not np.isnan(self.data[i + self.horizon - 1, 0]):
-                self.valid_indices.append(i)
+        self.valid_indices = valid_window_indices(self.data, self.lookback, self.horizon)
 
     def __len__(self):
         return len(self.valid_indices)
@@ -46,7 +44,6 @@ class WindTimeSeriesDataset(Dataset):
     def __getitem__(self, idx):
         t = self.valid_indices[idx]
         x = self.data[t - self.lookback : t, :]
-        x = np.nan_to_num(x, nan=0.0)
         y = self.data[t + self.horizon - 1, 0]
         return torch.tensor(x, dtype=torch.float32), torch.tensor([y], dtype=torch.float32)
 
@@ -63,18 +60,28 @@ def train_and_evaluate_torch_model(
     lr: float = 0.001,
     rated_capacity_mwh: float = 21.0,
     device: Optional[str] = None,
+    save_model_path: Optional[str] = None,
+    selection_metric: str = "crps",
+    patience: int = 5,
 ) -> Tuple[Dict[str, Any], np.ndarray, np.ndarray]:
     """
     PyTorch 모델 학습, Validation 기반 Early Stopping, Test 세트 평가 수행
     """
     if device is None:
         device = "cuda" if torch.cuda.is_available() else "cpu"
+    if selection_metric not in ("crps", "loss"):
+        raise ValueError("selection_metric must be crps or loss")
+    if patience < 1:
+        raise ValueError("patience must be positive")
 
     model = model.to(device)
 
     train_ds = WindTimeSeriesDataset(train_series, lookback_steps=lookback_steps, horizon=horizon, scale_factor=rated_capacity_mwh)
     val_ds = WindTimeSeriesDataset(val_series, lookback_steps=lookback_steps, horizon=horizon, scale_factor=rated_capacity_mwh)
     test_ds = WindTimeSeriesDataset(test_series, lookback_steps=lookback_steps, horizon=horizon, scale_factor=rated_capacity_mwh)
+
+    if any(len(ds) == 0 for ds in (train_ds, val_ds, test_ds)):
+        raise ValueError("No finite windows in one or more splits")
 
     train_loader = DataLoader(train_ds, batch_size=batch_size, shuffle=True)
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
@@ -84,8 +91,9 @@ def train_and_evaluate_torch_model(
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
 
     best_val_loss = float("inf")
+    best_selection = float("inf")
+    history = []
     best_weights = None
-    patience = 5
     patience_counter = 0
 
     model.train()
@@ -103,15 +111,27 @@ def train_and_evaluate_torch_model(
         # Validation 평가
         model.eval()
         val_loss = 0.0
+        val_predictions = []
         with torch.no_grad():
             for bx, by in val_loader:
                 bx, by = bx.to(device), by.to(device)
                 p = model(bx)
-                val_loss += criterion(p, by).item()
+                val_loss += criterion(p, by).item() * len(by)
+                val_predictions.append(p.cpu().numpy().ravel()*rated_capacity_mwh)
 
-        val_loss /= max(len(val_loader), 1)
+        val_loss /= len(val_ds)
+        # Use original float64 labels, not scaled float32 round trips.
+        val_targets=np.asarray(val_series)[np.asarray(val_ds.valid_indices)+horizon-1]
+        if val_targets.ndim==2: val_targets=val_targets[:,0]
+        val_crps=validation_crps(val_targets,np.concatenate(val_predictions),rated_capacity_mwh)
+        selection=val_crps if selection_metric=="crps" else val_loss
+        if not np.isfinite(selection): raise RuntimeError("Nonfinite validation selection score")
+        history.append(dict(epoch=epoch+1,val_loss=val_loss,val_crps=val_crps,selection_score=selection))
 
-        if val_loss < best_val_loss:
+        if selection < best_selection:
+            best_selection = selection
+            best_val_crps = val_crps
+            best_epoch = epoch + 1
             best_val_loss = val_loss
             best_weights = {k: v.cpu().clone() for k, v in model.state_dict().items()}
             patience_counter = 0
@@ -122,8 +142,16 @@ def train_and_evaluate_torch_model(
         model.train()
 
     # 최적 가중치 로드
+    if best_weights is None:
+        raise RuntimeError("No finite validation checkpoint; training failed")
     if best_weights is not None:
         model.load_state_dict({k: v.to(device) for k, v in best_weights.items()})
+
+    if save_model_path:
+        from pathlib import Path
+        Path(save_model_path).parent.mkdir(parents=True, exist_ok=True)
+        torch.save(model.state_dict(), save_model_path)
+        save_selection_history(save_model_path,history,selection_metric)
 
     # Test 세트 평가
     model.eval()
@@ -146,10 +174,12 @@ def train_and_evaluate_torch_model(
         y_pred = np.array([])
         y_true = np.array([])
 
-    # 물리적 상한 클리핑
-    y_pred = np.clip(y_pred, 0.0, rated_capacity_mwh)
+    # Return RAW predictions. The evaluator clips only for point metrics.
 
     metrics = evaluate_wind_forecast(y_true, y_pred, rated_capacity_mwh=rated_capacity_mwh)
-    metrics["horizon_hours"] = horizon
+    metrics.update(horizon_hours=horizon, best_epoch=best_epoch, stopped_epoch=epoch + 1,
+                   best_val_loss=best_val_loss, train_count=len(train_ds), val_count=len(val_ds))
+    metrics.update(selection_metric=selection_metric,best_val_crps=best_val_crps,
+                   best_selection_score=best_selection)
 
     return metrics, y_true, y_pred

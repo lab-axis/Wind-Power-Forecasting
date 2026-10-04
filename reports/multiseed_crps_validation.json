@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "run_id": "crps_multiseed_20261004T175005+0900",
+  "tests": 32,
+  "experiment_combinations": 96,
+  "scored_split_rows": 192,
+  "neural_checkpoint_reloads": 36,
+  "tree_checkpoint_reloads": 54,
+  "arima_parameter_reloads": 6,
+  "selection": "all checkpoints minimize recorded validation CRPS candidates",
+  "source_and_artifact_hashes": "verified",
+  "common_hourly_targets": "verified",
+  "bootstrap": "paired circular blocks of seed-averaged losses; no ensemble predictions",
+  "max_sampled_grid_refinement_difference": 0.00039728084591339474,
+  "reload_precision": {
+    "matmul_tf32": false,
+    "cudnn_tf32": false
+  },
+  "all_lightgbm_seed_outputs_identical": true
+}

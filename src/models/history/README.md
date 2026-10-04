@@ -1,19 +1,23 @@
-# EMFN (Exogenous Multiscale Fusion Network) Architecture Evolution History
+# EMFN 구조 이력
 
-이 디렉토리는 상명풍력 시간별 발전량 예측 연구에서 제안 모델 **EMFN**이 거쳐온 3단계 구조 진화 과정을 보존하는 아카이브입니다.
-최종 확정된 메인 모델 코드는 상위 디렉토리의 [`src/models/emfn.py`](../emfn.py) 및 [`src/models/emfn_trainer.py`](../emfn_trainer.py)에 위치합니다.
+현재 모델은 `../emfn.py`와 `../emfn_trainer.py`의 v3입니다.
 
----
+2026-10-05 기준, v3의 구조는 유지한 채 학습 선택 기준을 검증 CRPS로 통일한 3개 시드 실험을 완료했습니다. 과거 재현용 벤치마크/어블레이션 진입점은 loss 선택을 명시합니다. 이는 새 구조 버전 추가가 아니라 학습·평가 규약의 수정입니다. [실험 이력](../../../reports/EXPERIMENT_HISTORY.md)과 [현재 논문 구성안](../../../reports/baseline_benchmarks_and_future_plan.md)을 구분하여 참고하십시오.
 
-## 1. 버전별 구조 진화 개요
+| 버전 | 실제 소스 구조 | 해석 |
+|---|---|---|
+| v1 | 시계열 분해, 발전량·기상 Dual Encoders, Cross-Attention Fusion | 분리 인코더와 교차 주의 기반 결합 |
+| v2 | Multi-channel Causal TCN, Weather State Gating | 채널 결합 기반 백본 |
+| v3 | 공유 Multi-channel TCN, magnitude/zero adapters, HF/AR 경로, 선택적 기상 특징 MLP, Hurdle-Beta | 현재 유지하는 메인 구조 |
 
-| 버전 (Version) | 파일명 | 핵심 아키텍처 및 특징 | 주요 한계 및 해결 과제 |
-|:---|:---|:---|:---|
-| **EMFN v1** | `emfn_v1.py`<br>`emfn_v1_trainer.py` | - 단일 통합 Dilated Causal TCN 백본<br>- 발전량과 기상 6종을 단순 채널 결합(Concat)<br>- Bernoulli-Beta Hurdle 출력 헤드 적용 | **음의 전이(Negative Transfer)** 발생:<br>기상 정보 결합 시 단변량 모델 대비 초단기(+1h) MAE 악화 (기상 표현이 발전량 고유의 시계열 자기상관을 희석시킴) |
-| **EMFN v2** | `emfn_v2.py`<br>`emfn_v2_trainer.py` | - Dual Encoders (발전량 인코더 + 기상 인코더 분리)<br>- Cross-Attention 메커니즘을 통한 기상 특징 주입<br>- 독립된 기상-발전량 상호작용 설계 | 음의 전이는 성공적으로 해소(+3.7% 성능 개선)되었으나, 복잡한 Cross-Attention 연산 비용 대비 +1h 초단기에서 GBDT(LightGBM) 대비 여전히 오차 격차가 잔존함 |
-| **EMFN v3**<br>*(메인 모델로 승격)* | `emfn_v3.py`<br>`emfn_v3_trainer.py`<br>$\rightarrow$ `../emfn.py` | - **Multi-channel Causal TCN Backbone**<br>- **Task-Decoupled Dual-Route Network** (발전량 볼륨 분기 vs 영발전 분류 분기 완전 분리)<br>- **High-Frequency Residual Skips**: $y_t$, 모멘텀 $(y_t - y_{t-1})$, 단기 변동성 직결 스킵<br>- **Selective Weather Gating**: Cut-in 풍속 인접도 및 연속 0발전 스트릭 동역학 반영<br>- **Composite Supervised Hurdle Objective**: NLL + Huber 정밀 보정 | **최종 제안 모델 (Proposed Model)**:<br>- 음의 전이 완전 극복<br>- 1h ~ 12h 일중 급전 스펙트럼 전 구간 딥러닝 1위 석권<br>- 물리적 유계 위반율 **0.00% 자체 보장** |
+이전 README는 v1/v2 구조를 서로 바꾸어 기술했습니다. 위 표는 소스에 맞게 정정했습니다.
+v3의 두 분기는 공유 백본을 사용하므로 완전히 독립적인 네트워크가 아닙니다.
+`z_zero`라는 변수명과 달리 코드에서 `sigmoid(z_zero)`는 **양수 발전 확률**입니다.
+TCN의 causal은 입력의 시간 방향 처리이며 기상 변수의 인과 효과를 식별한다는 뜻이 아닙니다.
+게이팅은 통계적 특징 변환이며 제조사 시동 풍속이나 터빈 제어 법칙이 내장되어 있지 않습니다.
 
----
-
-## 2. 파일 보존 목적
-- 학술 논문 제5장 및 제6장의 **모델 구조 진화 분석(Architecture Evolution Analysis)** 및 **어블레이션 실험(Ablation Study)** 결과의 수치적 재현성을 영구히 보장하기 위함입니다.
+역사 파일은 변경하지 않았습니다. 다만 현재의 공용 전처리·평가 모듈과 함께 실행하면
+과거 실행 환경을 그대로 재현하는 것이 아닙니다. 과거 학습의 정확한 코드/시드/환경이
+기록되지 않은 경우 확인 불가입니다. 수정 전 전체 스냅샷과 파일 해시는
+`reports/archive/pre_correction_manifest.json` 및 로컬 `.experiment_archive/`에서 확인합니다.
+기존 수치는 구 평가 파이프라인의 결과이며 현재 우월성의 근거로 사용하지 않습니다.

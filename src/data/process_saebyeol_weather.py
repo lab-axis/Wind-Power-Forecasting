@@ -3,7 +3,7 @@ Saebyeol-Oreum (AWS 883) Hourly Weather Data Processing and Dataset Merging Modu
 - Loads raw hourly CSVs (2023, 2024, 2025)
 - Standardizes meteorological column names
 - Computes circular wind direction encodings (sin/cos)
-- Imputes minor missing values (< 0.2%) via time-based linear interpolation
+- Restores an hourly grid and fills at most three past-observation hours; records missingness
 - Merges with generation_hourly.parquet to generate data/processed/merged_dataset.parquet
 """
 
@@ -22,6 +22,7 @@ from src.features.wind_direction import wind_direction_to_sin_cos
 
 def load_and_clean_saebyeol_weather(
     weather_dirs: Optional[list] = None,
+    max_ffill_hours: int = 3,
 ) -> pd.DataFrame:
     """
     Loads, cleans, and standardizes Saebyeol-Oreum AWS 883 hourly observations.
@@ -86,21 +87,39 @@ def load_and_clean_saebyeol_weather(
     avail_cols = [c for c in std_cols if c in df_clean.columns]
     df_clean = df_clean[avail_cols].copy()
 
-    # Circular wind direction encoding
-    if "aws_wind_direction" in df_clean.columns:
+    return clean_hourly_weather(df_clean, max_ffill_hours=max_ffill_hours)
+
+
+def clean_hourly_weather(df_raw: pd.DataFrame, max_ffill_hours: int = 3) -> pd.DataFrame:
+    """Causal cleaning on a regular grid. Flags preserve original observation status.
+
+    The timestamp is assumed available immediately after its hourly interval ends.
+    Real telemetry delays are unknown; this is an explicit offline protocol assumption.
+    No extrapolation is made beyond the last timestamp in the source weather files.
+    """
+    if max_ffill_hours < 0:
+        raise ValueError("max_ffill_hours must be nonnegative")
+    df_clean = df_raw.copy()
+    df_clean["datetime"] = pd.to_datetime(df_clean["datetime"])
+    if df_clean.datetime.duplicated().any():
+        raise ValueError("Duplicate weather timestamps")
+    df_clean = df_clean.set_index("datetime").sort_index()
+    grid = pd.date_range(df_clean.index.min(), df_clean.index.max(), freq="h", name="datetime")
+    df_clean = df_clean.reindex(grid)
+    for col in list(df_clean.columns):
+        values = pd.to_numeric(df_clean[col], errors="coerce")
+        observed = values.notna()
+        last_time = pd.Series(grid, index=grid).where(observed).ffill()
+        df_clean[col + "_is_missing"] = ~observed
+        filled = values.ffill(limit=max_ffill_hours) if max_ffill_hours else values
+        df_clean[col + "_is_imputed"] = (~observed) & filled.notna()
+        df_clean[col + "_age_hours"] = (pd.Series(grid, index=grid) - last_time).dt.total_seconds() / 3600
+        df_clean[col] = filled
+    if "aws_wind_direction" in df_clean:
         sin_v, cos_v = wind_direction_to_sin_cos(df_clean["aws_wind_direction"])
         df_clean["aws_wind_dir_sin"] = sin_v
         df_clean["aws_wind_dir_cos"] = cos_v
-
-    # Time-based linear interpolation for minor missing values (limit 6 consecutive hours)
-    numeric_cols = df_clean.select_dtypes(include=[np.number]).columns
-    df_clean[numeric_cols] = df_clean[numeric_cols].interpolate(method="linear", limit=6)
-    # Forward and backward fill for boundary values
-    df_clean[numeric_cols] = df_clean[numeric_cols].bfill().ffill()
-
-    # Preciptation fillna 0.0
-    if "aws_precipitation" in df_clean.columns:
-        df_clean["aws_precipitation"] = df_clean["aws_precipitation"].fillna(0.0)
+    df_clean = df_clean.reset_index()
 
     return df_clean
 
@@ -109,12 +128,13 @@ def build_and_save_master_dataset(
     gen_path: str = "data/interim/generation_hourly.parquet",
     output_path: str = "data/processed/merged_dataset.parquet",
     interim_weather_path: str = "data/interim/weather_hourly.parquet",
+    max_ffill_hours: int = 3,
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """
     Merges cleaned generation data with Saebyeol-Oreum 883 hourly weather and time features.
     """
     print("[*] Processing Saebyeol-Oreum AWS 883 weather...")
-    df_weather = load_and_clean_saebyeol_weather()
+    df_weather = load_and_clean_saebyeol_weather(max_ffill_hours=max_ffill_hours)
     os.makedirs(os.path.dirname(interim_weather_path), exist_ok=True)
     df_weather.to_parquet(interim_weather_path, index=False)
     print(f"[+] Saved clean hourly weather ({len(df_weather):,} rows) to: {interim_weather_path}")
@@ -131,11 +151,12 @@ def build_and_save_master_dataset(
     # Add cyclical time features
     df_merged = add_cyclical_time_features(df_merged, time_col="datetime")
 
-    # Interpolate any residual boundary weather missings for generation timestamps
+    # Keep unavailable weather missing, including all of 2026 with current source files.
     weather_cols = [c for c in df_weather.columns if c != "datetime"]
-    for wc in weather_cols:
-        if wc in df_merged.columns:
-            df_merged[wc] = df_merged[wc].interpolate(method="linear", limit=6).bfill().ffill()
+    for col in [c for c in weather_cols if c.endswith("_is_missing")]:
+        df_merged[col] = df_merged[col].fillna(True).astype(bool)
+    for col in [c for c in weather_cols if c.endswith("_is_imputed")]:
+        df_merged[col] = df_merged[col].fillna(False).astype(bool)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df_merged.to_parquet(output_path, index=False)
@@ -147,6 +168,8 @@ def build_and_save_master_dataset(
         "start_time": str(df_merged["datetime"].min()),
         "end_time": str(df_merged["datetime"].max()),
         "weather_columns": weather_cols,
+        "max_ffill_hours": max_ffill_hours,
+        "missing_values_by_column": df_merged.isna().sum().astype(int).to_dict(),
         "wind_speed_mean": float(df_merged["aws_wind_speed"].mean()),
         "wind_speed_max": float(df_merged["aws_wind_speed"].max()),
         "temperature_mean": float(df_merged["aws_temperature"].mean()),
