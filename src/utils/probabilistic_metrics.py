@@ -3,7 +3,6 @@ import numpy as np
 from scipy.special import ndtr
 from scipy.stats import norm, beta as beta_dist
 from src.utils.metrics import evaluate_wind_forecast, compute_prediction_interval_metrics
-from src.models.hurdle_beta import evaluate_zero_head
 
 
 def grid_crps(y, cdf, grid, return_samples=False):
@@ -72,6 +71,7 @@ def score_distribution(frame, distribution, capacity=21., grid_points=1001):
     result['mae']=evaluate_wind_forecast(y,d['median'],rated_capacity_mwh=capacity)['mae']
     result['zero_point_f1_mean']=result.pop('zero_f1')
     result['zero_point_balanced_acc_mean']=result.pop('zero_balanced_acc')
+    from src.models.hurdle_beta import evaluate_zero_head
     z=evaluate_zero_head(y,1-d['p_zero'])
     result.update(zero_brier=z['brier_score_zero'],zero_auprc=z['auprc_zero'],zero_auroc=z['auroc'],zero_ece=z['ece_zero'])
     result.update(compute_prediction_interval_metrics(y,d['lower'],d['upper'],capacity))

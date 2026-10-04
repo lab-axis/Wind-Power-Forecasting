@@ -61,8 +61,8 @@
 Windows 호환 환경은 [설치 안내](reports/probabilistic_baselines.md)의 프로젝트 로컬 런타임을 사용합니다. 저장소 루트에서:
 
 ```powershell
-$env:PYTHONPATH = Join-Path $PWD '.experiment_archive/python_runtime'
-python -m unittest test_forecast_protocol test_probabilistic_extension test_crps_selection test_paired_uncertainty -v
+$env:PYTHONPATH = (Join-Path $PWD '.experiment_archive/python_runtime') + ';' + $PWD
+python -m unittest discover -s test -p "test_*.py" -v
 # 기존 검증 결과로 현재 본문/부록 표만 추출 (학습 없음)
 python -m src.experiments.export_paper_views
 # 새 다중 시드 실험이 필요한 경우에만 실행

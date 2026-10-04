@@ -53,3 +53,6 @@ models/checkpoints/*_test_preds.npz
 models/checkpoints/archive/pre_correction_20261004/
 reports/archive/pre_correction_20261004/
 reports/figures/archive/pre_correction_20261004/
+
+# Test and verification scripts (kept locally, excluded from commits)
+test/
