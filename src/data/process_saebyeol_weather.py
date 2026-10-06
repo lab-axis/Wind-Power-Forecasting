@@ -154,9 +154,9 @@ def build_and_save_master_dataset(
     # Keep unavailable weather missing, including all of 2026 with current source files.
     weather_cols = [c for c in df_weather.columns if c != "datetime"]
     for col in [c for c in weather_cols if c.endswith("_is_missing")]:
-        df_merged[col] = df_merged[col].fillna(True).astype(bool)
+        df_merged[col] = df_merged[col].astype("boolean").fillna(True).astype(bool)
     for col in [c for c in weather_cols if c.endswith("_is_imputed")]:
-        df_merged[col] = df_merged[col].fillna(False).astype(bool)
+        df_merged[col] = df_merged[col].astype("boolean").fillna(False).astype(bool)
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df_merged.to_parquet(output_path, index=False)

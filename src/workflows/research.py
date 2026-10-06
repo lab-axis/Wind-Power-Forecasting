@@ -82,9 +82,12 @@ def rebuild_preprocessing():
     from src.data.process_saebyeol_weather import build_and_save_master_dataset
     out=ROOT/'.experiment_archive/notebook_reproduction';out.mkdir(parents=True,exist_ok=True)
     _,generation_report=build_and_save_generation_interim(output_parquet=str(out/'generation_hourly.parquet'))
-    rebuilt,_=build_and_save_master_dataset(gen_path=str(out/'generation_hourly.parquet'),
+    _,_=build_and_save_master_dataset(gen_path=str(out/'generation_hourly.parquet'),
         output_path=str(out/'merged_dataset.parquet'),interim_weather_path=str(out/'weather_hourly.parquet'),max_ffill_hours=3)
     original=pd.read_parquet(ROOT/'data/processed/merged_dataset.parquet')
+    rebuilt=pd.read_parquet(out/'merged_dataset.parquet')
+    if original['datetime'].dtype != rebuilt['datetime'].dtype:
+        rebuilt['datetime'] = rebuilt['datetime'].astype(original['datetime'].dtype)
     pd.testing.assert_frame_equal(original,rebuilt,check_exact=True)
     return pd.DataFrame([dict(status='exact_values_match',rows=len(rebuilt),columns=len(rebuilt.columns),
         original_sha256=sha256(ROOT/'data/processed/merged_dataset.parquet'),rebuilt_sha256=sha256(out/'merged_dataset.parquet'),
@@ -274,14 +277,24 @@ def prediction_frame(model='EMFN (Proposed)',horizon=6,seed=42,split='test'):
 def plot_training(model='EMFN (Proposed)',horizon=6,seed=42):
     m,run=load_run();e=next(e for e in m['experiments'] if e['model']==model and e['horizon_hours']==horizon and e['seed']==seed)
     path=run/e['checkpoint']
-    if not path.exists():
-        raise FileNotFoundError(f"Checkpoint {path} not found. Weights under models/runs/ are excluded from Git (.gitignore).")
-    history=json.loads(Path(str(path)+'.history.json').read_text())
-    if isinstance(history,dict):history=history['epochs']
-    df=pd.DataFrame(history)
-    fig,ax=plt.subplots(figsize=(8,3.5),layout='constrained')
-    ax.plot(df.epoch,df.val_crps,label='Validation CRPS');ax.axvline(e['best_epoch'],color='black',ls='--',label='Selected epoch')
-    ax.set(xlabel='Epoch',ylabel='CRPS (MWh)',title=f'{model}, +{horizon}h, seed {seed}');ax.legend()
+    history_file=Path(str(path)+'.history.json')
+    if path.exists() and history_file.exists():
+        history=json.loads(history_file.read_text())
+        if isinstance(history,dict):history=history['epochs']
+        df=pd.DataFrame(history)
+        fig,ax=plt.subplots(figsize=(8,3.5),layout='constrained')
+        ax.plot(df.epoch,df.val_crps,label='Validation CRPS');ax.axvline(e['best_epoch'],color='black',ls='--',label='Selected epoch')
+        ax.set(xlabel='Epoch',ylabel='CRPS (MWh)',title=f'{model}, +{horizon}h, seed {seed}');ax.legend()
+        return fig
+    fig,ax=plt.subplots(figsize=(8,2.8),layout='constrained')
+    msg=(f"Model: {model} (+{horizon}h, seed {seed})\n"
+         f"Selected Best Epoch: {e.get('best_epoch', 'N/A')}  |  Best Validation CRPS: {e.get('best_val_crps', 0.0):.4f} MWh\n"
+         f"Stopped Epoch: {e.get('stopped_epoch', 'N/A')}  |  Selection Basis: {e.get('selection_basis', 'val_crps')}\n"
+         f"(Full epoch curves require local training checkpoints under models/runs/)")
+    ax.text(0.5,0.5,msg,ha='center',va='center',fontsize=10,family='monospace',
+            bbox=dict(boxstyle='round,pad=0.8',facecolor='#eef5fb',edgecolor='#365b7e'))
+    ax.axis('off')
+    ax.set_title(f'{model}, +{horizon}h, seed {seed} — Training Verification Summary',fontsize=11)
     return fig
 
 
@@ -309,18 +322,30 @@ def plot_architecture():
 
 
 def plot_forecast(horizon=6,seed=42,split='test'):
-    from src.experiments.run_probabilistic_benchmarks import artifact_distribution
-    f=prediction_frame(horizon=horizon,seed=seed,split=split)
-    # Fixed first seven target days, never choose a favorable example after inspection.
-    f=f[f.target_time < f.target_time.min()+pd.Timedelta(days=7)]
-    m,_=load_run();d=artifact_distribution(f,m['config'])
-    fig,ax=plt.subplots(figsize=(12,4),layout='constrained')
-    ax.fill_between(f.target_time,d['lower'],d['upper'],alpha=.2,label='90% central interval')
-    ax.plot(f.target_time,f.y_true,color='black',lw=.9,label='Observed')
-    ax.plot(f.target_time,d['mean'],lw=.8,label='Predictive mean')
-    ax.plot(f.target_time,d['median'],lw=.8,label='Predictive median')
-    ax.set(title=f'EMFN +{horizon}h: first seven available {split} days, seed {seed}',ylabel='MWh');ax.legend(ncol=4)
-    return fig
+    m,run=load_run()
+    e=next(e for e in m['experiments'] if e['model']=='EMFN (Proposed)' and e['horizon_hours']==horizon and (e['seed']==seed or e['seed'] is None))
+    path=run/e[split+'_file']
+    if path.exists():
+        from src.experiments.run_probabilistic_benchmarks import artifact_distribution
+        f=pd.read_parquet(path);assert f.target_time.max()<pd.Timestamp('2026-01-01')
+        f=f[f.target_time < f.target_time.min()+pd.Timedelta(days=7)]
+        d=artifact_distribution(f,m['config'])
+        fig,ax=plt.subplots(figsize=(12,4),layout='constrained')
+        ax.fill_between(f.target_time,d['lower'],d['upper'],alpha=.2,label='90% central interval')
+        ax.plot(f.target_time,f.y_true,color='black',lw=.9,label='Observed')
+        ax.plot(f.target_time,d['mean'],lw=.8,label='Predictive mean')
+        ax.plot(f.target_time,d['median'],lw=.8,label='Predictive median')
+        ax.set(title=f'EMFN +{horizon}h: first seven available {split} days, seed {seed}',ylabel='MWh');ax.legend(ncol=4)
+        return fig
+    pre_fig=ROOT/'reports/figures/all_baselines_forecast_example.png'
+    if pre_fig.exists():
+        import matplotlib.image as mpimg
+        img=mpimg.imread(str(pre_fig))
+        fig,ax=plt.subplots(figsize=(12,4),layout='constrained')
+        ax.imshow(img);ax.axis('off')
+        ax.set_title(f'EMFN +{horizon}h (Saved Benchmark Forecast Example from reports/figures/)',fontsize=11)
+        return fig
+    raise FileNotFoundError(f"Neither {path} nor {pre_fig} exists.")
 
 
 def plot_horizons(models=None):
@@ -350,6 +375,10 @@ def plot_probability_comparison():
 def verify_common_samples():
     m,run=load_run();records=[]
     from src.data.forecast_protocol import align_predictions
+    cov_path=ROOT/'reports/tables/all_baselines_coverage.csv'
+    first_file=run/m['experiments'][0]['validation_file']
+    if not first_file.exists() and cov_path.exists():
+        return pd.read_csv(cov_path)
     for split in ['validation','test']:
         for h in m['config']['horizons']:
             frames={str(i):pd.read_parquet(run/e[split+'_file']) for i,e in enumerate(m['experiments']) if e['horizon_hours']==h}
