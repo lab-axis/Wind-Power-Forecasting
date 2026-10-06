@@ -1,0 +1,10 @@
+# Extra packages for Google Colab. Colab already ships torch (with GPU support), numpy, pandas, scipy,
+# scikit-learn, matplotlib, seaborn and pyarrow, so versions are NOT pinned here (">=" never downgrades).
+# Do not `pip install -r requirements.txt` on Colab: it would replace Colab's CUDA torch / numpy and
+# usually forces a runtime restart.
+statsmodels>=0.14
+lightgbm>=4.3
+prophet>=1.1.5
+PyYAML>=6.0
+nbformat>=5.10
+nbclient>=0.10

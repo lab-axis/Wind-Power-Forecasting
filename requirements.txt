@@ -1,31 +1,34 @@
-# Core Data & Numerical
-numpy>=1.26.0
-pandas>=2.2.0
-scipy>=1.12.0
-pyarrow>=15.0.0
-fastparquet>=2024.2.0
-statsmodels>=0.14.0
+# Pinned runtime for reproducing the committed results. Python 3.11.
+# Only packages imported by src/ and the notebooks are listed; everything else is pulled in transitively.
+#
+#   conda env create -f environment.yml     # recommended (uses this file)
+#   pip install -r requirements.txt         # alternative inside an existing Python 3.11 venv
+#
+# PyTorch: this default installs the CPU build on Windows/macOS and a CUDA build on Linux.
+# For an NVIDIA GPU on Windows, install it afterwards (see README):
+#   pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 
-# Machine Learning & Deep Learning
-scikit-learn>=1.4.0
-lightgbm>=4.3.0
---extra-index-url https://download.pytorch.org/whl/cu124
-torch>=2.4.0
-torchvision>=0.19.0
-torchaudio>=2.4.0
+# Numerics. numpy/scipy/statsmodels are pinned together: numpy 2.4.6 + scipy 1.17.1 breaks the
+# statsmodels state-space (ARIMA) binary on Windows (see src/models/arima_model.py).
+numpy==2.2.6
+scipy==1.15.3
+statsmodels==0.14.6
+pandas==3.0.6
+pyarrow==25.0.0
 
-# Modern Time Series & Hybrid Models
-prophet>=1.1.5
-einops>=0.8.0
-pytorch-tcn>=1.2.0
+# Models
+scikit-learn==1.9.1
+lightgbm==4.7.0
+prophet==1.4.0
+torch==2.6.0
 
-# Visualization & Interactive
-matplotlib>=3.8.0
-seaborn>=0.13.0
-tqdm>=4.66.0
-pyyaml>=6.0.1
-ipykernel>=6.29.0
-notebook>=7.1.0
-jupyterlab>=4.1.0
-nbformat>=5.10.0
-nbclient>=0.10.0
+# Plots, config
+matplotlib==3.11.2
+seaborn==0.13.2
+PyYAML==6.0.3
+
+# Notebooks (execute_notebooks / build_notebooks)
+ipykernel==7.4.0
+nbformat==5.11.1
+nbclient==0.11.0
+nbconvert==7.17.1

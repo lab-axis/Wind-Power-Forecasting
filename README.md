@@ -64,15 +64,48 @@ GRU의 마지막 ReLU를 선형 출력으로 고쳐 음수 초기 출력의 기�
 
 공식 단위·집계 시각·계량 경계, 배포 지연, 정격·정비·출력제어 이력은 확인이 필요합니다. 공식 설명은 송전량으로 기술하지만 본문 kWh와 컬럼 정의 MWh가 상충하며, 사용자가 별도 설명을 받은 이력은 없습니다. 2026 AWS 분 자료는 존재합니다. 2025년 자료에서 변환을 검증한 2026년 시간 기상 후보를 별도 보관했으며 기존 병합 데이터에는 반영하지 않았습니다. 2026년 예측 성능은 평가하지 않았습니다. 풍속 조건부 오차나 임의 비대칭 오차를 실제 cut-in 검증·시장 수익으로 해석하지 않습니다.
 
-## 재현과 파일 안내
+## 환경 설정 및 재현 안내
 
-Windows 호환 환경은 [설치 안내](reports/probabilistic_baselines.md)의 프로젝트 로컬 런타임을 사용합니다. 저장소 루트에서:
+### 1. 로컬 환경 설정 (Conda 권장)
 
-```powershell
-$env:PYTHONPATH = (Join-Path $PWD '.experiment_archive/python_runtime') + ';' + $PWD
+저장소 루트에서 `environment.yml` 하나로 검증된 환경을 구축할 수 있습니다:
+
+```bash
+# 1) Conda 가상환경 생성 및 활성화
+conda env create -f environment.yml
+conda activate wind_power
+
+# 2) Jupyter 노트북 커널 등록 (노트북 워크플로 실행 시 필요)
+python -m ipykernel install --user --name wind_power --display-name "Python (wind_power)"
+
+# 3) (선택) Windows NVIDIA GPU 가속이 필요한 경우
+pip install torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
+```
+
+> **pip 단독 설치:** Python 3.11 가상환경에서 `pip install -r requirements.txt`로도 설치 가능합니다. `requirements.txt`에 명시된 버전 조합(NumPy 2.2.6, SciPy 1.15.3, statsmodels 0.14.6)은 Windows 환경에서의 ARIMA 상태공간 바이너리 호환성을 보장합니다.
+
+### 2. Google Colab에서 실행하기
+
+로컬 GPU 사양이 부족하거나 웹 브라우저에서 바로 실행하려는 경우, 아래 배지를 클릭하여 Colab 런타임에서 저장소를 클론하고 결과를 열람하거나 모델을 실행할 수 있습니다:
+
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-axis/Wind-Power-Forecasting/blob/main/colab/wind_power_colab.ipynb)
+
+Colab 노트북(`colab/wind_power_colab.ipynb`)은 다음과 같이 동작합니다:
+1. 저장소를 클론하고 `colab/requirements-colab.txt`로 Colab 사전 설치 스택(CUDA PyTorch 등)과 충돌 없이 필요한 패키지만 빠르게 추가합니다.
+2. 커밋된 `reports/` 및 `data/`를 바탕으로 학습 없이 즉시 종합 벤치마크 결과와 시각화를 조회합니다.
+3. GPU 런타임(T4 등)을 활성화하면 Colab 인스턴스 내에서 직접 재학습(`RUN_EMFN_EXAMPLE=True` 등)도 가능합니다.
+
+### 3. 검증 및 실험 실행 명령
+
+저장소 루트에서:
+
+```bash
+# 단위 테스트 실행 (로컬 test/ 디렉터리 내 44개 테스트)
 python -m unittest discover -s test -p "test_*.py" -v
+
 # 검증된 최신 실행으로 현재 본문/부록 표만 추출 (학습 없음)
 python -m src.experiments.export_paper_views
+
 # 새 전체 실험이 필요한 경우에만 실행
 python -m src.experiments.run_all_baselines
 python -m src.experiments.verify_all_baselines --run models/runs/<new_run_id>
