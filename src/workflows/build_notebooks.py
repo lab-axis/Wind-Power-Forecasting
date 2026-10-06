@@ -12,6 +12,23 @@ from src.experiments.run_comprehensive_extended_matrix import sha256
 
 BOOT = '''from pathlib import Path
 import os, sys
+
+# Google Colab 자동 감지 및 환경 설정
+if 'google.colab' in sys.modules or (os.path.exists('/content') and not (Path.cwd() / "configs/base_config.yaml").exists()):
+    repo_dir = Path('/content/Wind-Power-Forecasting')
+    if not repo_dir.exists():
+        print("Google Colab 환경 감지: Wind-Power-Forecasting 저장소를 클론합니다...")
+        import subprocess
+        subprocess.run(["git", "clone", "--depth", "1", "https://github.com/lab-axis/Wind-Power-Forecasting.git", str(repo_dir)], check=True)
+        print("필수 의존 패키지를 설치합니다 (colab/requirements-colab.txt)...")
+        subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r", str(repo_dir / "colab/requirements-colab.txt")], check=True)
+    os.chdir(repo_dir)
+    sys.path.insert(0, str(repo_dir))
+    try:
+        get_ipython().run_line_magic('cd', str(repo_dir))
+    except Exception:
+        pass
+
 ROOT = next(p for p in [Path.cwd(), *Path.cwd().parents] if (p / "configs/base_config.yaml").exists())
 os.chdir(ROOT)
 sys.path.insert(0, str(ROOT))
@@ -100,8 +117,19 @@ def main():
         nb=nbf.v4.new_notebook()
         nb.metadata.kernelspec=dict(display_name='Python (wind_power)',language='python',name='wind_power')
         nb.metadata.language_info=dict(name='python',version='3.11')
-        nb.cells=[nbf.v4.new_markdown_cell(text) if kind=='m' else nbf.v4.new_code_cell(text) for kind,text in cells]
-        nbf.write(nb,notebooks/name)
+        badge = f"[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/lab-axis/Wind-Power-Forecasting/blob/main/notebooks/{name})\n\n"
+        built_cells = []
+        for i, (kind, text) in enumerate(cells):
+            if i == 0 and kind == 'm':
+                lines = text.split('\n', 1)
+                augmented = f"{lines[0]}\n\n{badge}{lines[1].lstrip()}" if len(lines) > 1 else f"{text}\n\n{badge}"
+                built_cells.append(nbf.v4.new_markdown_cell(augmented))
+            elif kind == 'm':
+                built_cells.append(nbf.v4.new_markdown_cell(text))
+            else:
+                built_cells.append(nbf.v4.new_code_cell(text))
+        nb.cells = built_cells
+        nbf.write(nb, notebooks / name)
     # Remove only old, already archived notebook files inside the verified folder.
     for p in old:
         if p.name not in specs:
