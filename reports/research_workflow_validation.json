@@ -1,0 +1,20 @@
+{
+  "status": "passed",
+  "run_id": "all_baselines_20261005T143556+0900",
+  "unit_tests": 44,
+  "notebooks_executed": 5,
+  "scored_split_rows": 468,
+  "summary_rows": 180,
+  "main_table_rows": 30,
+  "compact_main_table_rows": 15,
+  "preserved_old_artifacts": 1552,
+  "data_rebuild_sha256": "01861a5a18cac3731f4238d9307d03e2bb29d9c3aa11e8640abef42dc6d0f9b4",
+  "forecast_2026_used": false,
+  "post_run_source_changes": [
+    {
+      "file": "configs/base_config.yaml",
+      "change": "comments only; parsed configuration unchanged"
+    }
+  ],
+  "checks": "matching run IDs, artifact hashes, fully executed notebooks, paper subset, test log, exact preprocessing rebuild"
+}

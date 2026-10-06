@@ -1,0 +1,13 @@
+split,horizon_hours,common_count,model_seed_combinations
+validation,1,4249,39
+test,1,8736,39
+validation,3,4247,39
+test,3,8734,39
+validation,6,4244,39
+test,6,8731,39
+validation,9,4241,39
+test,9,8728,39
+validation,12,4238,39
+test,12,8725,39
+validation,24,4226,39
+test,24,8713,39

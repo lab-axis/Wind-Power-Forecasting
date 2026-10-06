@@ -108,6 +108,7 @@ def train_and_evaluate_emfn(
     save_model_path: Optional[str] = None,
     selection_metric: str = "crps",
     crps_grid_points: int = 1001,
+    model_factory=None,
 ) -> Tuple[Dict[str, Any], np.ndarray, Dict[str, Any]]:
     """
     Trains EMFN and evaluates on 2025 Test Set.
@@ -128,7 +129,9 @@ def train_and_evaluate_emfn(
     val_loader = DataLoader(val_ds, batch_size=batch_size, shuffle=False)
     test_loader = DataLoader(test_ds, batch_size=batch_size, shuffle=False)
 
-    model = EMFN(
+    # Experimental constructors share this training/selection protocol; default
+    # behavior and checkpoint layout remain those of the main EMFN model.
+    model = (model_factory or EMFN)(
         lookback_len=lookback_steps,
         pred_len=1,
         n_weather_features=n_weather,

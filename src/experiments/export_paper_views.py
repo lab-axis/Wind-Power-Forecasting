@@ -10,8 +10,8 @@ def main():
     config_path=ROOT/'configs/paper_presentation.yaml'
     cfg=yaml.safe_load(config_path.read_text(encoding='utf-8'))
     m=json.loads((ROOT/cfg['source_manifest']).read_text(encoding='utf-8'))
-    check=json.loads((ROOT/'reports/multiseed_crps_validation.json').read_text(encoding='utf-8'))
-    provenance=json.loads((ROOT/'reports/multiseed_analysis_provenance.json').read_text(encoding='utf-8'))
+    check=json.loads((ROOT/cfg.get('source_validation','reports/multiseed_crps_validation.json')).read_text(encoding='utf-8'))
+    provenance=check if 'source_validation' in cfg else json.loads((ROOT/'reports/multiseed_analysis_provenance.json').read_text(encoding='utf-8'))
     if not (m['status']=='complete' and check['status']=='passed' and m['run_id']==check['run_id']==provenance['run_id']):
         raise ValueError('Verified matching source run required')
     source=ROOT/cfg['source_summary']
@@ -32,9 +32,15 @@ def main():
             raise ValueError('Missing model/horizon rows in source')
         view['_order']=view.model.map({name:i for i,name in enumerate(names)})
         view=view.sort_values(['horizon_hours','_order']).drop(columns='_order')
-        view['run_id']=m['run_id'];view['selection_basis']='validation_crps'
+        view['run_id']=m['run_id']
+        bases={e['model']:e['selection_basis'] for e in m['experiments']}
+        view['selection_basis']=view.model.map(bases)
         path=ROOT/'reports/tables'/dest;view.to_csv(path,index=False)
         outputs[path.relative_to(ROOT).as_posix()]=dict(rows=len(view),sha256=sha256(path))
+        if group=='main_models' and 'main_table_horizons' in cfg:
+            compact=view[view.horizon_hours.isin(cfg['main_table_horizons'])]
+            compact_path=ROOT/'reports/tables/paper_main_compact.csv';compact.to_csv(compact_path,index=False)
+            outputs[compact_path.relative_to(ROOT).as_posix()]=dict(rows=len(compact),sha256=sha256(compact_path))
     record=dict(run_id=m['run_id'],status='verified_subset_only',config=cfg,
         source_summary_sha256=sha256(source),presentation_config_sha256=sha256(config_path),
         exporter_sha256=sha256(__file__),outputs=outputs)

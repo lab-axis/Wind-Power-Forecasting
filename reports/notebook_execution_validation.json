@@ -1,0 +1,39 @@
+{
+  "status": "passed",
+  "run_id": "all_baselines_20261005T143556+0900",
+  "notebooks": [
+    {
+      "file": "notebooks/01_sources_and_preprocessing.ipynb",
+      "sha256": "0ae5e6270f4b450e85dedade2b1e1af607aa547247b6ca931d6a22c866b2f08f",
+      "code_cells": 7,
+      "executed": true
+    },
+    {
+      "file": "notebooks/02_model_dataset_eda.ipynb",
+      "sha256": "673c93d385583eec601ffded454fa8e6a2e2500dbe7485d651acd8e6fd685533",
+      "code_cells": 5,
+      "executed": true
+    },
+    {
+      "file": "notebooks/03_baseline_training_and_metrics.ipynb",
+      "sha256": "1e571bad04bb59b4b4e4927d6a6768d0b475920efda339fc1fe7b639c4f91b63",
+      "code_cells": 8,
+      "executed": true
+    },
+    {
+      "file": "notebooks/04_emfn_architecture_and_results.ipynb",
+      "sha256": "eb3531e2538d8a75b539612924c856b0499fd9d2da89e80a19dc4ea3f511fd1c",
+      "code_cells": 7,
+      "executed": true
+    },
+    {
+      "file": "notebooks/05_comparison_and_research_limits.ipynb",
+      "sha256": "4d7f121c681dc3c68512e9af98d3ebfb501da5cac5336f560219d4be91e9a278",
+      "code_cells": 9,
+      "executed": true
+    }
+  ],
+  "training_enabled": false,
+  "workflow_sha256": "223cd6ab21afdf427d8d46a51437f737cc90b738af58d1f6dce5ecccfa15fb4b",
+  "template_sha256": "97e8e6f11bcb410545268341aa8be07e477b1c42b94ce2020cdfe0d54aacfdd8"
+}

@@ -38,6 +38,7 @@ class ProphetForecaster:
         time_col: str = "datetime",
         target_col: str = "generation_mwh",
         exog_cols: Optional[List[str]] = None,
+        seed: int = 42,
     ):
         """
         Prophet 포맷 (ds, y)으로 변환 후 모델 적합
@@ -51,6 +52,7 @@ class ProphetForecaster:
             weekly_seasonality=self.weekly_seasonality,
             yearly_seasonality=self.yearly_seasonality,
             changepoint_prior_scale=self.changepoint_prior_scale,
+            uncertainty_samples=0,
         )
 
         if exog_cols:
@@ -58,7 +60,7 @@ class ProphetForecaster:
                 pdf[col] = df[col].values
                 self.model.add_regressor(col)
 
-        self.model.fit(pdf)
+        self.model.fit(pdf, seed=seed)
         return self
 
     def predict(
@@ -66,6 +68,7 @@ class ProphetForecaster:
         future_df: pd.DataFrame,
         time_col: str = "datetime",
         exog_cols: Optional[List[str]] = None,
+        clip: bool = True,
     ) -> np.ndarray:
         """
         미래 데이터프레임에 대한 발전량 예측 수행
@@ -79,4 +82,4 @@ class ProphetForecaster:
         forecast = self.model.predict(pdf)
         preds = forecast["yhat"].values
         # 물리적 상한 클리핑 [0.0, 21.0]
-        return np.clip(preds, 0.0, self.rated_capacity_mwh)
+        return np.clip(preds, 0.0, self.rated_capacity_mwh) if clip else preds

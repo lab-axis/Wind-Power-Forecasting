@@ -1,0 +1,111 @@
+{
+  "status": "passed",
+  "reference_year": 2025,
+  "generation_used": false,
+  "forecast_scores_computed": false,
+  "rules": {
+    "instant": [
+      "aws_temperature",
+      "aws_humidity",
+      "aws_local_pressure",
+      "aws_sea_level_pressure"
+    ],
+    "wind": "trailing ten finite minutes, speed-weighted circular direction",
+    "calm": "published rounded speed < 0.5 m/s gives direction zero",
+    "rounding": "nearest tenth, half up",
+    "imputation": "none",
+    "precipitation": "not reconstructed; not a model input"
+  },
+  "source_hashes": {
+    "data/raw/weather/saebyeol_883-minute/SURFACE_AWS_883_MI_2025-01_2025-12_2026.csv": "83d357aba1a3984a0dde0e1e0be3be5d0b15b1343f490ecb14fa8a04359de8fe",
+    "data/raw/weather/saebyeol_883-hour/SURFACE_AWS_883_HR_2025_2025_2026.csv": "068100dfc08943d18bf7e45a1a2803b36b748edae45b819314b079b99663c32b",
+    "data/raw/weather/saebyeol_883-minute/SURFACE_AWS_883_MI_2026-01_2026-01_2026.csv": "f493f850c0d4af92d41e50aeec475438d5ccfa18e0d6de4e5952bbafd600c9d5",
+    "data/raw/weather/saebyeol_883-minute/SURFACE_AWS_883_MI_2026-02_2026-02_2026.csv": "4d24c1b5420d37363734a5522f44370d9ac13bef44f1038ccdee264b5a38cf8b",
+    "data/raw/weather/saebyeol_883-minute/SURFACE_AWS_883_MI_2026-03_2026-03_2026.csv": "f902860b8895cf13cba4ea7759953830e0c244776b7ad8d0489104e54b2bf63c"
+  },
+  "implementation_sha256": "696d92105f0490d2816ba90fa5c031f9fa137af8a824aaa977fe7fa1d09e0f62",
+  "audit_script_sha256": "b8951aef90e035819f46978ebb91780245ac225bb9848645f2aa0e4d3a6bd2dc",
+  "variables": [
+    {
+      "variable": "aws_temperature",
+      "paired_count": 8758,
+      "reference_count": 8758,
+      "mae": 0.0,
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "within_tolerance": 8758,
+      "exact_to_1e_9": 8758
+    },
+    {
+      "variable": "aws_humidity",
+      "paired_count": 8755,
+      "reference_count": 8756,
+      "mae": 0.0,
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "within_tolerance": 8755,
+      "exact_to_1e_9": 8755
+    },
+    {
+      "variable": "aws_local_pressure",
+      "paired_count": 8758,
+      "reference_count": 8758,
+      "mae": 0.0,
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "within_tolerance": 8758,
+      "exact_to_1e_9": 8758
+    },
+    {
+      "variable": "aws_sea_level_pressure",
+      "paired_count": 8758,
+      "reference_count": 8758,
+      "mae": 0.0,
+      "max_absolute_error": 0.0,
+      "tolerance": 1e-09,
+      "within_tolerance": 8758,
+      "exact_to_1e_9": 8758
+    },
+    {
+      "variable": "aws_wind_speed",
+      "paired_count": 8749,
+      "reference_count": 8758,
+      "mae": 0.0,
+      "max_absolute_error": 0.0,
+      "tolerance": 0.100001,
+      "within_tolerance": 8749,
+      "exact_to_1e_9": 8749
+    },
+    {
+      "variable": "aws_wind_direction",
+      "paired_count": 8749,
+      "reference_count": 8758,
+      "mae": 0.0,
+      "max_absolute_error": 0.0,
+      "tolerance": 0.100001,
+      "within_tolerance": 8749,
+      "exact_to_1e_9": 8749
+    }
+  ],
+  "official_definition": "https://apihub.kma.go.kr/apiList.do?seqApi=2&seqApiSub=239",
+  "staged_weather": {
+    "path": ".experiment_archive/holdout_2026/weather_hourly_candidate.parquet",
+    "sha256": "33a7e41c1c1e7966c95c61227618fde51b1b7013ac5c4143129fd3be8535e372",
+    "rows": 2136,
+    "missing_by_column": {
+      "datetime": 0,
+      "aws_temperature": 0,
+      "aws_humidity": 0,
+      "aws_local_pressure": 0,
+      "aws_sea_level_pressure": 0,
+      "aws_wind_speed": 1,
+      "aws_wind_direction": 1,
+      "wind_speed_unrounded": 1,
+      "wind_direction_unrounded": 1,
+      "wind_minutes_present": 0,
+      "wind_vector_minutes_present": 0,
+      "source_timestamp_present": 0
+    },
+    "status": "candidate_not_merged_or_used_for_forecasting"
+  }
+}

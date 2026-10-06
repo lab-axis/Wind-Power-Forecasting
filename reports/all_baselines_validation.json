@@ -1,0 +1,23 @@
+{
+  "status": "passed",
+  "run_id": "all_baselines_20261005T143556+0900",
+  "model_families": 15,
+  "experiment_combinations": 234,
+  "scored_split_rows": 468,
+  "reloaded_model_horizon_seed_combinations": 222,
+  "neural_full_validation_test_reloads": 126,
+  "non_neural_reload_scope": "first/middle/last test predictions per combination; persistence full test vectors",
+  "source_artifact_data_hashes": "verified",
+  "all_metrics": "recomputed",
+  "common_target_issue_labels": "verified",
+  "forecast_2026_used": false,
+  "validation_constant_warnings": [],
+  "artifact_hashes": {
+    "reports/tables/all_baselines_metrics.csv": "9ab85cc5c595511b729a57b9b11ebcff3bde9910f54fc151d8b0d7a0c983127d",
+    "reports/tables/all_baselines_summary.csv": "0b233f6049ef7e3cadcca5e21bf60fc46588f8457621285e739f4a0ce34c0d40",
+    "reports/tables/all_baselines_selection.csv": "d06753d7e21f455af7b6c073bfb8621f642d836ed578fee9d3a3f204529076e6",
+    "reports/tables/all_baselines_coverage.csv": "c0d43ddae4b5994035fe5532c3d49973a9d2c166d7a39da8161366da281e396f",
+    "reports/tables/all_baselines_seed_spread.csv": "03d62ca14b95e52d968c7a167047c461ba0cc7f5e105003c8cd7856b1fbf92bc"
+  },
+  "verifier_sha256": "35cd850bb34adf8a477b6a1f1e8e41383b2d7c7b1bee17f20bfa0c2ae686f650"
+}

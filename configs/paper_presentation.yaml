@@ -4,17 +4,20 @@ status: working_layout_not_final_submission_roster
 primary_metric: crps
 key_secondary_metric: zero_brier
 metrics: [crps, zero_brier, rmse, mae, zero_auprc]
-max_comparators_excluding_emfn: 5
+max_comparators_excluding_emfn: 4
 main_models:
   - EMFN (Proposed)
+  - Naive Persistence
   - ARIMA
-  - CNN-LSTM (+Weather)
+  - LSTM (+Weather)
   - LightGBM (24h matched)
 supplementary_probability_models:
   - EMFN (Proposed)
   - Quantile LightGBM (24h matched)
   - Hurdle Quantile LightGBM (24h matched)
-candidate_not_yet_in_current_view: Naive Persistence
-source_manifest: reports/multiseed_crps_manifest.json
-source_summary: reports/tables/multiseed_crps_summary.csv
+main_table_horizons: [1, 6, 24]
+curve_horizons: [1, 3, 6, 9, 12, 24]
+source_manifest: reports/all_baselines_manifest.json
+source_summary: reports/tables/all_baselines_summary.csv
+source_validation: reports/all_baselines_validation.json
 retain_all_results: true

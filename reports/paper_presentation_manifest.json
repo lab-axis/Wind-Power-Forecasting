@@ -1,5 +1,5 @@
 {
-  "run_id": "crps_multiseed_20261004T175005+0900",
+  "run_id": "all_baselines_20261005T143556+0900",
   "status": "verified_subset_only",
   "config": {
     "updated": "2026-10-05",
@@ -13,11 +13,12 @@
       "mae",
       "zero_auprc"
     ],
-    "max_comparators_excluding_emfn": 5,
+    "max_comparators_excluding_emfn": 4,
     "main_models": [
       "EMFN (Proposed)",
+      "Naive Persistence",
       "ARIMA",
-      "CNN-LSTM (+Weather)",
+      "LSTM (+Weather)",
       "LightGBM (24h matched)"
     ],
     "supplementary_probability_models": [
@@ -25,22 +26,39 @@
       "Quantile LightGBM (24h matched)",
       "Hurdle Quantile LightGBM (24h matched)"
     ],
-    "candidate_not_yet_in_current_view": "Naive Persistence",
-    "source_manifest": "reports/multiseed_crps_manifest.json",
-    "source_summary": "reports/tables/multiseed_crps_summary.csv",
+    "main_table_horizons": [
+      1,
+      6,
+      24
+    ],
+    "curve_horizons": [
+      1,
+      3,
+      6,
+      9,
+      12,
+      24
+    ],
+    "source_manifest": "reports/all_baselines_manifest.json",
+    "source_summary": "reports/tables/all_baselines_summary.csv",
+    "source_validation": "reports/all_baselines_validation.json",
     "retain_all_results": true
   },
-  "source_summary_sha256": "f98ded3747a0ce27ea9b366d3a5774a36de078ab45057fa5f348af75d1926fd9",
-  "presentation_config_sha256": "ac23e930fca9b6d5968c466739b1f50deafe36bdb3996ff504f56d2176ba16e5",
-  "exporter_sha256": "3bef9bbe22a66bb810d07d2e771632bf17946b91287239ab08fd645e55cc3980",
+  "source_summary_sha256": "0b233f6049ef7e3cadcca5e21bf60fc46588f8457621285e739f4a0ce34c0d40",
+  "presentation_config_sha256": "07a8ca05bb12c1bdda576a838dc339cf86f77a5bbf96184981ac6e340c1dd018",
+  "exporter_sha256": "52b5ab291de605a296d7711acb30d9e8c0bcea69e6b96fa87bab110b12722b79",
   "outputs": {
     "reports/tables/paper_main_standard_baselines.csv": {
-      "rows": 24,
-      "sha256": "009ddfd5ab2b7431f59e595d34e553990fb65a21282bd60fdfd78c5d9638aed8"
+      "rows": 30,
+      "sha256": "58b822a91070f35cf6a063024be808d5f95d23c5751406a90dd7e8cabd7b7ade"
+    },
+    "reports/tables/paper_main_compact.csv": {
+      "rows": 15,
+      "sha256": "15326c95d22282f4545c8a11c895f877b867002f7d55a9b994b07ea7ae1e4f11"
     },
     "reports/tables/paper_supplementary_probability.csv": {
       "rows": 18,
-      "sha256": "be26506948fa24275dde407dccf43586b3337c01f01812153391b623336da169"
+      "sha256": "c265981c4daa0b032c9b0c651570814542e8a783de01afb9dd25f59651db9272"
     }
   }
 }

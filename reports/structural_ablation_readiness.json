@@ -1,0 +1,121 @@
+{
+  "status": "prepared_and_smoke_passed",
+  "config": {
+    "version": "structural-controls-2026-10-05",
+    "status": "prepared_not_a_completed_benchmark",
+    "seeds": [
+      42,
+      2026,
+      3407
+    ],
+    "horizons": [
+      1,
+      3,
+      6,
+      9,
+      12,
+      24
+    ],
+    "selection_metric": "crps",
+    "crps_grid_points": 1001,
+    "lookback_hours": 24,
+    "capacity_mwh": 21.0,
+    "epochs": 35,
+    "patience": 7,
+    "learning_rate": 0.001,
+    "batch_size": 128,
+    "torch_threads": 4,
+    "evaluation_split": "validation",
+    "holdout_2026": "prohibited",
+    "variants": [
+      "reference",
+      "shared_adapter",
+      "no_weather_state_features",
+      "no_hf_ar",
+      "common_linear",
+      "common_sigmoid",
+      "common_hurdle"
+    ],
+    "interpretation": {
+      "architecture": "reference vs shared_adapter/no_weather_state_features/no_hf_ar",
+      "output_family": "common_linear/common_sigmoid/common_hurdle share representation architecture and initial weights, trained end-to-end",
+      "losses": "normalized Huber for linear/sigmoid; existing composite NLL+Huber for hurdle",
+      "limitations": "not frozen-identical-h; not parameter-count-matched; validation used for selection and diagnostic evaluation"
+    }
+  },
+  "config_sha256": "a56291dce0d7d8eb48c1456ce1d495dc1b65ebabbe2fa386ddf77ec3c7648259",
+  "parameter_counts": {
+    "reference": 121164,
+    "shared_adapter": 112908,
+    "no_weather_state_features": 119324,
+    "no_hf_ar": 120435,
+    "common_linear": 104074,
+    "common_sigmoid": 104074,
+    "common_hurdle": 104204
+  },
+  "processed_data_sha256": "01861a5a18cac3731f4238d9307d03e2bb29d9c3aa11e8640abef42dc6d0f9b4",
+  "planned_fits": 126,
+  "real_data_training_performed": false,
+  "holdout_2026_used": false,
+  "source_hashes": {
+    "src/experiments/prepare_structural_ablation.py": "85c4cfc4be559f4ff76900748022ede6a79ac4b50751de24c1a84c4b7b871167",
+    "src/models/emfn.py": "47ad6202bdd3455fdd7110b16541f90e65cd8245ea32fad529e86b7bbb9bd6c8",
+    "src/models/emfn_ablation.py": "9a8941568a47291725f838d0456d4cc6fa7a52d6a7354d3a8fe262d1201d31c4",
+    "src/models/emfn_trainer.py": "f4fe738daa5d278ba031902dbbffc925d846cc6a3deb0885636c99eaa292a1aa"
+  },
+  "available_windows": {
+    "train": {
+      "1": 13047,
+      "3": 13045,
+      "6": 13042,
+      "9": 13039,
+      "12": 13036,
+      "24": 13024
+    },
+    "validation": {
+      "1": 4249,
+      "3": 4247,
+      "6": 4244,
+      "9": 4241,
+      "12": 4238,
+      "24": 4226
+    }
+  },
+  "synthetic_smoke": [
+    {
+      "variant": "reference",
+      "best_val_crps": 4.02046921033489,
+      "count": 56
+    },
+    {
+      "variant": "shared_adapter",
+      "best_val_crps": 4.014582482684909,
+      "count": 56
+    },
+    {
+      "variant": "no_weather_state_features",
+      "best_val_crps": 4.022445121200941,
+      "count": 56
+    },
+    {
+      "variant": "no_hf_ar",
+      "best_val_crps": 4.041836241065928,
+      "count": 56
+    },
+    {
+      "variant": "common_linear",
+      "best_val_crps": 7.26573004986008,
+      "count": 56
+    },
+    {
+      "variant": "common_sigmoid",
+      "best_val_crps": 6.05055383478521,
+      "count": 56
+    },
+    {
+      "variant": "common_hurdle",
+      "best_val_crps": 4.1334567164894525,
+      "count": 56
+    }
+  ]
+}

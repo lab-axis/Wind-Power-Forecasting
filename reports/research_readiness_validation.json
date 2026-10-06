@@ -1,0 +1,18 @@
+{
+  "status": "passed",
+  "date": "2026-10-05",
+  "unit_tests": 41,
+  "synthetic_training_variants": 7,
+  "previous_result_files_unchanged": 31,
+  "processed_dataset_unchanged": true,
+  "forecast_files_verified": 192,
+  "diagnostic_rows": 2400,
+  "local_markdown_links": "passed",
+  "new_real_data_training": false,
+  "holdout_forecast_evaluation": false,
+  "artifacts": {
+    "reports/aws_reconstruction_validation.json": "84f15937dec4c84ad4e4b1adf624b73971a23f838b8776bab4eed4a859c37087",
+    "reports/forecast_diagnostics_manifest.json": "c6d791157f90c529e3e34408d9f0e22e7c113da86c9022940aea41a1dfc7f108",
+    "reports/structural_ablation_readiness.json": "56bfc29a692b1ecf4937d472ec570daf4fa30f9c2fa3d05b01fa3b3a77a50482"
+  }
+}

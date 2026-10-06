@@ -9,7 +9,7 @@ Architecture Highlights:
    - Route A (Magnitude Branch):
      * Dedicated projection from shared spatio-temporal features.
      * High-frequency residual skip connections: immediate lag y_t, momentum (y_t - y_{t-1}),
-       short-term variance, and direct autoregressive linear mapping.
+       recent lag differences, six-step mean, and direct autoregressive linear mapping.
      * Directly outputs Beta shape parameters (alpha, beta) for positive generation volume.
    - Route B (Zero-State Branch):
      * Dedicated projection from shared spatio-temporal features.
@@ -252,7 +252,8 @@ class EMFN(nn.Module):
                 nn.Dropout(dropout),
             )
 
-            # Selective Weather Gating (Physical cut-in / storm boundaries)
+            # Weather/state feature augmentation, concatenated into the zero route.
+            # This is not a multiplicative gate or a turbine cut-in/out law.
             if n_weather_features > 0 and use_selective_gate:
                 self.gate_dim = 16
                 self.selective_gate = nn.Sequential(

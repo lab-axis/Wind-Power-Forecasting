@@ -1,0 +1,16 @@
+{
+  "run_id": "all_baselines_20261005T143556+0900",
+  "status": "generated_from_verified_run",
+  "artifact_hashes": {
+    "reports/figures/all_baselines_main_horizons.png": "8c6a1b34578987a97c09c4b69177e4a644a765c05ae78c030034b4fba4de4775",
+    "reports/figures/all_baselines_probability.png": "2bcc3a4ae19230e2143d86932e9fa4e20300b74eae73e2f9db72f2949cc420d5",
+    "reports/figures/all_baselines_architecture.png": "a3e94c773224433c8d7331a898c00c9c64d72a43a20707975a77161f3be1129d",
+    "reports/figures/all_baselines_forecast_example.png": "bfcea16cbec9d8ecd3b71ca140dfb397234c2b623247067c78b345203fcf142f",
+    "reports/all_baselines_results.md": "9b85d0210667e7ee8cd5ec871f0a68c722d5c04590b7eb438a35c7e12d36525f",
+    "reports/tables/all_baselines_horizon_average.csv": "c78343a3093135dcedc5e9d100f2ef9e4c5321514149b47bc26638c174689ec7"
+  },
+  "sources": {
+    "src/experiments/report_all_baselines.py": "a2b8d5537589d63e2ad4f2f354b694b3d9446a0cec7ac7b2a61b6a4317c176ec",
+    "src/workflows/research.py": "223cd6ab21afdf427d8d46a51437f737cc90b738af58d1f6dce5ecccfa15fb4b"
+  }
+}

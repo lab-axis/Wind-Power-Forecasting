@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "prior_runs": [
+    {
+      "manifest": "corrected_run_manifest.json",
+      "run_id": "corrected_v3_20261004T005217+0900",
+      "verified_artifacts": 108,
+      "data_unchanged": true
+    },
+    {
+      "manifest": "probabilistic_run_manifest.json",
+      "run_id": "probabilistic_extension_20261004T121114+0900",
+      "verified_artifacts": 383,
+      "data_unchanged": true
+    },
+    {
+      "manifest": "multiseed_crps_manifest.json",
+      "run_id": "crps_multiseed_20261004T175005+0900",
+      "verified_artifacts": 1061,
+      "data_unchanged": true
+    }
+  ],
+  "scope": "existing recorded checkpoint/prediction/artifact hashes; source code changes are intentional"
+}

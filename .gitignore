@@ -39,7 +39,7 @@ venv.bak/
 # Temporary evaluation directories
 .jbeval/
 
-# Large high-frequency minute-level raw weather data (Use hourly AWS data in saebyeol_883-hour instead)
+# Large local minute-level AWS sources (hourly reconstruction audit uses these when available)
 data/raw/weather/saebyeol_883-minute/
 data/raw/weather/jeju_geumak_993/
 
@@ -56,3 +56,6 @@ reports/figures/archive/pre_correction_20261004/
 
 # Test and verification scripts (kept locally, excluded from commits)
 test/
+
+# Temporarily excluded until public release
+LICENSE

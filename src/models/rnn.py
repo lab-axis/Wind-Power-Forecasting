@@ -71,4 +71,6 @@ class GRUForecaster(nn.Module):
         gru_out, _ = self.gru(x)
         last_out = gru_out[:, -1, :]
         out = self.fc(last_out)
-        return torch.relu(out)
+        # Preserve gradients for negative initial outputs; physical clipping is
+        # applied only by the common evaluator, as for the LSTM baseline.
+        return out

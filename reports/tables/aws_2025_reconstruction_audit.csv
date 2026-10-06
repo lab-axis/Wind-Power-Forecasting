@@ -1,0 +1,7 @@
+variable,paired_count,reference_count,mae,max_absolute_error,tolerance,within_tolerance,exact_to_1e_9
+aws_temperature,8758,8758,0.0,0.0,1e-09,8758,8758
+aws_humidity,8755,8756,0.0,0.0,1e-09,8755,8755
+aws_local_pressure,8758,8758,0.0,0.0,1e-09,8758,8758
+aws_sea_level_pressure,8758,8758,0.0,0.0,1e-09,8758,8758
+aws_wind_speed,8749,8758,0.0,0.0,0.100001,8749,8749
+aws_wind_direction,8749,8758,0.0,0.0,0.100001,8749,8749

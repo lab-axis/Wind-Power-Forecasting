@@ -105,8 +105,9 @@ feature_sets:
       - "pressure"
       - "precipitation"
 
-# Forward-looking research decision; not retroactive metadata for completed runs.
-# Current paper comparison: configs/multiseed_crps.yaml and run_multiseed_crps.
+# Historical six-model evaluation-plan metadata retained below.
+# Current full comparison: configs/all_baselines.yaml and run_all_baselines.
+# Current paper display: configs/paper_presentation.yaml (separate from training).
 # Historical corrected benchmark/ablation entry points retain their loss selection.
 evaluation_plan:
   status: implemented_in_paper_six_model_multiseed_comparison
