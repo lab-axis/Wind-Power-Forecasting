@@ -179,8 +179,15 @@ def load_run():
 
 def metrics_table(split='test',models=None,horizons=None,full=False):
     m,run=load_run();path=run/'metrics.csv'
-    assert sha256(path)==m['artifact_hashes']['metrics.csv']
-    df=pd.read_csv(path);df=df[df.split.eq(split)]
+    if path.exists():
+        assert sha256(path)==m['artifact_hashes']['metrics.csv']
+        df=pd.read_csv(path)
+    else:
+        fallback=ROOT/'reports/tables/all_baselines_metrics.csv'
+        if not fallback.exists():
+            raise FileNotFoundError(f'Neither {path} nor {fallback} exists.')
+        df=pd.read_csv(fallback)
+    df=df[df.split.eq(split)]
     if models is not None:df=df[df.model.isin(models)]
     if horizons is not None:df=df[df.horizon_hours.isin(horizons)]
     return df if full else df[['model','seed','horizon_hours','count']+PRIMARY]
@@ -256,14 +263,20 @@ def train_emfn_example(horizon=1,seed=42):
 def prediction_frame(model='EMFN (Proposed)',horizon=6,seed=42,split='test'):
     m,run=load_run()
     e=next(e for e in m['experiments'] if e['model']==model and e['horizon_hours']==horizon and (e['seed']==seed or e['seed'] is None))
-    path=run/e[split+'_file'];assert sha256(path)==e[split+'_sha256']
+    path=run/e[split+'_file']
+    if not path.exists():
+        raise FileNotFoundError(f"Local prediction file {path} not found. Prediction files under models/runs/ are excluded from Git (.gitignore). Train locally or via Colab to regenerate.")
+    assert sha256(path)==e[split+'_sha256']
     f=pd.read_parquet(path);assert f.target_time.max()<pd.Timestamp('2026-01-01')
     return f
 
 
 def plot_training(model='EMFN (Proposed)',horizon=6,seed=42):
     m,run=load_run();e=next(e for e in m['experiments'] if e['model']==model and e['horizon_hours']==horizon and e['seed']==seed)
-    path=run/e['checkpoint'];history=json.loads(Path(str(path)+'.history.json').read_text())
+    path=run/e['checkpoint']
+    if not path.exists():
+        raise FileNotFoundError(f"Checkpoint {path} not found. Weights under models/runs/ are excluded from Git (.gitignore).")
+    history=json.loads(Path(str(path)+'.history.json').read_text())
     if isinstance(history,dict):history=history['epochs']
     df=pd.DataFrame(history)
     fig,ax=plt.subplots(figsize=(8,3.5),layout='constrained')
